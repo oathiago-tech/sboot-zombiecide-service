@@ -1,0 +1,22 @@
+services:
+  zombicide-postgres:
+    image: postgres:17
+    container_name: zombicide-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zombicide
+      POSTGRES_USER: zombicide_app
+      POSTGRES_PASSWORD: zombicide_app_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - zombicide_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zombicide_app -d zombicide"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  zombicide_pgdata:
