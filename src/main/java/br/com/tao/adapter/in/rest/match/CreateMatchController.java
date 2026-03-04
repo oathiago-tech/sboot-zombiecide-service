@@ -16,7 +16,7 @@ public class CreateMatchController {
 
       private final CreateMatchUseCase useCase;
 
-      @PostMapping ("/create")
+      @PostMapping("/create")
       public void createMatch(@RequestBody CreateMatchRequestDTO request) {
             useCase.createMatch(CreateMatchMapper.toDomain(request));
       }

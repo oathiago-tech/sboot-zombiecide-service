@@ -4,7 +4,7 @@ import br.com.tao.adapter.out.persistence.match.entity.MatchEntity;
 import br.com.tao.adapter.out.persistence.match.entity.MatchPlayerEntity;
 import br.com.tao.adapter.out.persistence.match.repository.MatchJpaRepository;
 import br.com.tao.application.service.enumeration.CharacterEnum;
-import br.com.tao.application.service.enumeration.DifficultEnum;
+import br.com.tao.application.service.enumeration.DifficultyEnum;
 import br.com.tao.domain.match.model.Match;
 import br.com.tao.domain.match.model.MatchCampaign;
 import br.com.tao.domain.match.model.MatchPlayer;
@@ -42,7 +42,7 @@ public class MatchRepositoryAdapter implements MatchRepository {
 
       private static MatchEntity toEntity(Match match) {
             MatchEntity entity = new MatchEntity();
-            entity.setDifficult(DifficultEnum.getDifficult(match.getDifficult()));
+            entity.setDifficulty(DifficultyEnum.getDifficult(match.getDifficult()));
             entity.setCampaignName(match.getCampaign() != null ? match.getCampaign().getName() : null);
 
             if (match.getPlayers() != null) {
@@ -64,7 +64,7 @@ public class MatchRepositoryAdapter implements MatchRepository {
       private static Match toDomain(MatchEntity entity) {
             return Match.builder()
                   .id(entity.getId().toString())
-                  .difficult(entity.getDifficult().name())
+                  .difficult(entity.getDifficulty().name())
                   .campaign(MatchCampaign.builder().name(entity.getCampaignName()).build())
                   .players(entity.getPlayers() == null
                         ? Collections.emptyList()

@@ -14,6 +14,6 @@ public class TagRepositoryAdapter implements TagRepository {
 
       @Override
       public TagEntity findTagById(String tagId) {
-            return repository.findTagEntityByTagId(tagId);
+            return repository.findByTagUid(tagId).orElse(null);
       }
 }
