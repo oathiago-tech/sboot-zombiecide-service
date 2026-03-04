@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class DamageMatchController {
 
       private final DamagePlayerUseCase damagePlayerUseCase;
-      private final RevertDamageUseCase revertDamageUseCase;
 
       @PostMapping("/damage")
       public ResponseEntity<DamagePlayerResponseDTO> damage(
@@ -25,10 +24,5 @@ public class DamageMatchController {
             @RequestParam(name = "amount", defaultValue = "1") int amount
       ) {
             return ResponseEntity.ok(damagePlayerUseCase.damage(matchPlayerId, amount));
-      }
-
-      @PostMapping("/damage/revert")
-      public ResponseEntity<Match> revert(@RequestParam("event") String damageEventId) {
-            return ResponseEntity.ok(revertDamageUseCase.revert(damageEventId));
       }
 }

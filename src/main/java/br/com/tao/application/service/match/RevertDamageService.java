@@ -47,7 +47,7 @@ public class RevertDamageService implements RevertDamageUseCase {
 
             DamagePayload payload;
             try {
-                  payload = objectMapper.readValue(damageEvent.getPayload(), DamagePayload.class);
+                  payload = objectMapper.treeToValue(damageEvent.getPayload(), DamagePayload.class);
             } catch (Exception e) {
                   throw new IllegalStateException("Failed to parse damage payload for event: " + damageEventId, e);
             }

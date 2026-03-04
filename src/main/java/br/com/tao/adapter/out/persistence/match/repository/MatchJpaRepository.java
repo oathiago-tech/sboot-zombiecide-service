@@ -25,7 +25,6 @@ public interface MatchJpaRepository extends JpaRepository<MatchEntity, UUID> {
             """)
       Optional<MatchEntity> findByIdWithPlayers(UUID matchId);
 
-      @Lock(LockModeType.PESSIMISTIC_WRITE)
       @Query("""
             select m
             from MatchEntity m

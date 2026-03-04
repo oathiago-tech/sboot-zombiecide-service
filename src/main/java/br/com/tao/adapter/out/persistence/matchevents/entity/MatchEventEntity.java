@@ -3,9 +3,12 @@ package br.com.tao.adapter.out.persistence.matchevents.entity;
 import br.com.tao.adapter.out.persistence.match.entity.MatchEntity;
 import br.com.tao.adapter.out.persistence.match.entity.MatchPlayerEntity;
 import br.com.tao.application.service.enumeration.EventTypeEnum;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -29,14 +32,16 @@ public class MatchEventEntity {
       private MatchPlayerEntity actor;
 
       @Enumerated(EnumType.STRING)
+      @JdbcTypeCode (SqlTypes.NAMED_ENUM)
       @Column(name = "event_type", nullable = false, length = 50)
       private EventTypeEnum eventType;
 
       @Column(name = "tag_uid", length = 255)
       private String tagUid;
 
+      @JdbcTypeCode(SqlTypes.JSON)
       @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
-      private String payload = "{}";
+      private JsonNode payload;
 
       @Column(name = "created_at", nullable = false)
       private OffsetDateTime createdAt;
