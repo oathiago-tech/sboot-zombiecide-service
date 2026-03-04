@@ -12,12 +12,16 @@ import br.com.tao.usecase.out.match.MatchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 @RequiredArgsConstructor
 public class MatchRepositoryAdapter implements MatchRepository {
+
+      private static final int MAX_PLAYERS = 6;
 
       private final MatchJpaRepository repository;
 
@@ -37,17 +41,29 @@ public class MatchRepositoryAdapter implements MatchRepository {
 
       @Override
       public Match findActiveMatch() {
-            return null;
+            return MatchRepositoryAdapter.toDomain(Objects.requireNonNull(repository.findByActive(Boolean.TRUE).orElse(null)));
       }
 
       private static MatchEntity toEntity(Match match) {
+            if (match == null) {
+                  throw new IllegalArgumentException("MATCH MUST NOT BE NULL");
+            }
+
+            if (match.getPlayers() != null && match.getPlayers().size() > MAX_PLAYERS) {
+                  throw new IllegalArgumentException("MAX PLAYERS IS " + MAX_PLAYERS + ", GOT " + match.getPlayers().size());
+            }
+
             MatchEntity entity = new MatchEntity();
             entity.setDifficulty(DifficultyEnum.getDifficult(match.getDifficult()));
             entity.setCampaignName(match.getCampaign() != null ? match.getCampaign().getName() : null);
+            entity.setActive(Boolean.FALSE);
+            entity.setCreatedAt(OffsetDateTime.now());
 
             if (match.getPlayers() != null) {
                   for (MatchPlayer p : match.getPlayers()) {
                         if (p == null) continue;
+                        if (p.getName() == null || p.getName().isBlank()) continue;
+                        if (p.getCharacter() == null || p.getCharacter().isBlank()) continue;
 
                         MatchPlayerEntity pe = new MatchPlayerEntity();
                         pe.setName(p.getName());
@@ -65,7 +81,7 @@ public class MatchRepositoryAdapter implements MatchRepository {
             return Match.builder()
                   .id(entity.getId().toString())
                   .difficult(entity.getDifficulty().name())
-                  .campaign(MatchCampaign.builder().name(entity.getCampaignName()).build())
+                  .campaign(entity.getCampaignName() == null ? null : MatchCampaign.builder().name(entity.getCampaignName()).build())
                   .players(entity.getPlayers() == null
                         ? Collections.emptyList()
                         : entity.getPlayers().stream()
