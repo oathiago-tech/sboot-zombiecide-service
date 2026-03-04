@@ -54,8 +54,8 @@ public class MatchRepositoryAdapter implements MatchRepository {
             }
 
             MatchEntity entity = new MatchEntity();
-            entity.setDifficulty(DifficultyEnum.getDifficult(match.getDifficult()));
-            entity.setCampaignName(match.getCampaign() != null ? match.getCampaign().getName() : null);
+            entity.setDifficulty(DifficultyEnum.getDifficult(match.getDifficulty()));
+            entity.setCampaignName(match.getCampaignName());
             entity.setActive(Boolean.FALSE);
             entity.setCreatedAt(OffsetDateTime.now());
 
@@ -78,19 +78,37 @@ public class MatchRepositoryAdapter implements MatchRepository {
       }
 
       private static Match toDomain(MatchEntity entity) {
+            var players = entity.getPlayers() == null
+                  ? Collections.<MatchPlayer>emptyList()
+                  : entity.getPlayers().stream()
+                  .map(p -> MatchPlayer.builder()
+                        .id(p.getId() == null ? null : p.getId().toString())
+                        .name(p.getName())
+                        .character(p.getCharacter() == null ? null : p.getCharacter().name())
+                        .life(p.getLife())
+                        .level(p.getLevel())
+                        .zombiesKill(p.getZombiesKill())
+                        .build())
+                  .toList();
+
+            String turnPhase = entity.getTurnPhase() == null ? null : entity.getTurnPhase().name();
+            Integer idx = entity.getCurrentTurnIndex();
+
+            String currentPlayerId = null;
+            if ("PLAYER".equals(turnPhase) && idx != null && idx >= 0 && idx < players.size()) {
+                  currentPlayerId = players.get(idx).getId();
+            }
+
             return Match.builder()
-                  .id(entity.getId().toString())
-                  .difficult(entity.getDifficulty().name())
-                  .campaign(entity.getCampaignName() == null ? null : MatchCampaign.builder().name(entity.getCampaignName()).build())
-                  .players(entity.getPlayers() == null
-                        ? Collections.emptyList()
-                        : entity.getPlayers().stream()
-                        .map(p -> MatchPlayer.builder()
-                              .name(p.getName())
-                              .character(p.getCharacter().name())
-                              .build())
-                        .toList()
-                  )
+                  .id(entity.getId() == null ? null : entity.getId().toString())
+                  .campaignName(entity.getCampaignName())
+                  .difficulty(entity.getDifficulty() == null ? null : entity.getDifficulty().name())
+                  .active(Boolean.TRUE.equals(entity.getActive()))
+                  .createdAt(entity.getCreatedAt())
+                  .players(players)
+                  .turnPhase(turnPhase)
+                  .currentTurnIndex(idx)
+                  .currentPlayerId(currentPlayerId)
                   .build();
       }
 }

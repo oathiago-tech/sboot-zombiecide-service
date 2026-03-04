@@ -10,6 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MatchPlayer {
+      private String id;
       private String name;
       private String character;
+      private Integer life;
+      private Integer level;
+      private Integer zombiesKill;
 }

@@ -1,9 +1,12 @@
 package br.com.tao.adapter.out.persistence.match.entity;
 
 import br.com.tao.application.service.enumeration.DifficultyEnum;
+import br.com.tao.application.service.enumeration.TurnPhase;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -32,6 +35,14 @@ public class MatchEntity {
 
       @Column(name = "created_at", nullable = false)
       private OffsetDateTime createdAt;
+
+      @Enumerated(EnumType.STRING)
+      @JdbcTypeCode (SqlTypes.NAMED_ENUM)
+      @Column(name = "turn_phase", nullable = false, columnDefinition = "zombicide.turn_phase")
+      private TurnPhase turnPhase = TurnPhase.PLAYER;
+
+      @Column(name = "current_turn_index", nullable = false)
+      private Integer currentTurnIndex = 0;
 
       @OneToMany(
             mappedBy = "match",

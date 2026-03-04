@@ -2,47 +2,54 @@ package br.com.tao.application.service.match;
 
 import br.com.tao.adapter.out.persistence.match.entity.MatchEntity;
 import br.com.tao.adapter.out.persistence.match.repository.MatchJpaRepository;
+import br.com.tao.application.service.enumeration.TurnPhase;
 import br.com.tao.domain.match.model.Match;
 import br.com.tao.domain.match.model.MatchPlayer;
-import br.com.tao.usecase.in.match.StartMatchUseCase;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
-public class StartMatchService implements StartMatchUseCase {
+public class AdvanceTurnService {
 
       private final MatchJpaRepository matchJpaRepository;
 
-      @Override
       @Transactional
-      public Match startMatch(String matchId) {
-            UUID id;
-            try {
-                  id = UUID.fromString(matchId);
-            } catch (IllegalArgumentException e) {
-                  throw new IllegalArgumentException("Invalid match id (UUID): " + matchId, e);
+      public Match nextTurn() {
+            MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate()
+                  .orElseThrow(() -> new IllegalStateException("No active match"));
+
+            int playerCount = match.getPlayers() == null ? 0 : match.getPlayers().size();
+            if (playerCount <= 0) {
+                  throw new IllegalStateException("Active match has no players");
             }
 
-            matchJpaRepository.deactivateAllActive();
+            if (match.getTurnPhase() == TurnPhase.PLAYER) {
+                  int idx = match.getCurrentTurnIndex() == null ? 0 : match.getCurrentTurnIndex();
+                  if (idx < playerCount - 1) {
+                        match.setCurrentTurnIndex(idx + 1);
+                  } else {
+                        match.setTurnPhase(TurnPhase.ZOMBIE);
+                        match.setCurrentTurnIndex(0);
+                  }
+            } else {
+                  match.setTurnPhase(TurnPhase.PLAYER);
+                  match.setCurrentTurnIndex(0);
+            }
 
-            MatchEntity match = matchJpaRepository.findByIdWithPlayers(id)
-                  .orElseThrow(() -> new IllegalArgumentException("Match not found: " + matchId));
-
-            match.setActive(Boolean.TRUE);
             MatchEntity saved = matchJpaRepository.save(match);
 
             return Match.builder()
                   .id(saved.getId().toString())
                   .campaignName(saved.getCampaignName())
                   .difficulty(saved.getDifficulty().name())
-                  .active(true)
+                  .active(Boolean.TRUE.equals(saved.getActive()))
                   .createdAt(saved.getCreatedAt())
                   .players(saved.getPlayers() == null
-                        ? java.util.List.<MatchPlayer>of()
+                        ? Collections.emptyList()
                         : saved.getPlayers().stream()
                         .map(p -> MatchPlayer.builder()
                               .id(p.getId() == null ? null : p.getId().toString())
@@ -52,11 +59,10 @@ public class StartMatchService implements StartMatchUseCase {
                               .level(p.getLevel())
                               .zombiesKill(p.getZombiesKill())
                               .build())
-                        .toList()
-                  )
+                        .toList())
                   .turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
+                  .currentPlayerId(saved.getCurrentTurnIndex() == null ? null : saved.getPlayers().get(saved.getCurrentTurnIndex()).getId().toString())
                   .currentTurnIndex(saved.getCurrentTurnIndex())
-                  .currentPlayerId(null)
                   .build();
       }
 }
