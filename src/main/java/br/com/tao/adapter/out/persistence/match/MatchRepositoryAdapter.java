@@ -13,17 +13,31 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
 public class MatchRepositoryAdapter implements MatchRepository {
 
-      private final MatchJpaRepository jpaRepository;
+      private final MatchJpaRepository repository;
 
       @Override
       public Match save(Match match) {
-            MatchEntity saved = jpaRepository.save(toEntity(match));
+            MatchEntity saved = repository.save(toEntity(match));
             return toDomain(saved);
+      }
+
+      @Override
+      public List<Match> findAll() {
+            return repository.findAll()
+                  .stream()
+                  .map(MatchRepositoryAdapter::toDomain)
+                  .toList();
+      }
+
+      @Override
+      public Match findActiveMatch() {
+            return null;
       }
 
       private static MatchEntity toEntity(Match match) {

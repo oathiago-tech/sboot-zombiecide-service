@@ -7,4 +7,5 @@ import lombok.Data;
 @Data
 public class CreateMatchPlayerDomain {
       private String name;
+      private String character;
 }

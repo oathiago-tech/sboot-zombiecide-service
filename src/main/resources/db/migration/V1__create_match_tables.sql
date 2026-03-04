@@ -2,7 +2,8 @@ CREATE TABLE zombicide.matches
 (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_name VARCHAR(255) NOT NULL,
-    difficult     VARCHAR(50)  NOT NULL
+    difficult     VARCHAR(50)  NOT NULL,
+    active        BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE zombicide.match_players

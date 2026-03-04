@@ -3,9 +3,9 @@ package br.com.tao.adapter.mapper.match;
 import br.com.tao.adapter.in.rest.match.dto.CreateMatchCampaignRequestDTO;
 import br.com.tao.adapter.in.rest.match.dto.CreateMatchPlayerRequestDTO;
 import br.com.tao.adapter.in.rest.match.dto.CreateMatchRequestDTO;
-import br.com.tao.usecase.in.match.domain.CreateMatchCampaignDomain;
-import br.com.tao.usecase.in.match.domain.CreateMatchDomain;
-import br.com.tao.usecase.in.match.domain.CreateMatchPlayerDomain;
+import br.com.tao.domain.match.model.Match;
+import br.com.tao.domain.match.model.MatchCampaign;
+import br.com.tao.domain.match.model.MatchPlayer;
 
 import java.util.Collections;
 import java.util.List;
@@ -16,29 +16,29 @@ public final class CreateMatchMapper {
       private CreateMatchMapper() {
       }
 
-      public static CreateMatchDomain toDomain(CreateMatchRequestDTO dto) {
+      public static Match toDomain(CreateMatchRequestDTO dto) {
             if (dto == null) {
                   return null;
             }
 
-            return CreateMatchDomain.builder()
+            return Match.builder()
                   .campaign(toDomain(dto.getCampaign()))
                   .difficult(dto.getDifficult())
                   .players(toPlayerDomainList(dto.getPlayers()))
                   .build();
       }
 
-      private static CreateMatchCampaignDomain toDomain(CreateMatchCampaignRequestDTO dto) {
+      private static MatchCampaign toDomain(CreateMatchCampaignRequestDTO dto) {
             if (dto == null) {
                   return null;
             }
 
-            return CreateMatchCampaignDomain.builder()
+            return MatchCampaign.builder()
                   .name(dto.getName())
                   .build();
       }
 
-      private static List<CreateMatchPlayerDomain> toPlayerDomainList(List<CreateMatchPlayerRequestDTO> players) {
+      private static List<MatchPlayer> toPlayerDomainList(List<CreateMatchPlayerRequestDTO> players) {
             if (players == null || players.isEmpty()) {
                   return Collections.emptyList();
             }
@@ -49,14 +49,15 @@ public final class CreateMatchMapper {
                   .toList();
       }
 
-      private static CreateMatchPlayerDomain toDomain(CreateMatchPlayerRequestDTO dto) {
+      private static MatchPlayer toDomain(CreateMatchPlayerRequestDTO dto) {
             if (dto == null) {
                   return null;
             }
 
-            return  CreateMatchPlayerDomain
+            return  MatchPlayer
                   .builder()
                   .name(dto.getName())
+                  .character(dto.getCharacter())
                   .build();
       }
 }

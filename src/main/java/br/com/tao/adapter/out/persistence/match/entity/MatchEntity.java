@@ -36,6 +36,8 @@ public class MatchEntity {
       @Column(name = "difficult", nullable = false, length = 50)
       private DifficultEnum difficult;
 
+      private Boolean active;
+
       @OneToMany(
             mappedBy = "match",
             cascade = CascadeType.ALL,
