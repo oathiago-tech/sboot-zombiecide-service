@@ -6,7 +6,6 @@ import br.com.tao.adapter.out.persistence.match.repository.MatchJpaRepository;
 import br.com.tao.application.service.enumeration.CharacterEnum;
 import br.com.tao.application.service.enumeration.DifficultyEnum;
 import br.com.tao.domain.match.model.Match;
-import br.com.tao.domain.match.model.MatchCampaign;
 import br.com.tao.domain.match.model.MatchPlayer;
 import br.com.tao.usecase.out.match.MatchRepository;
 import lombok.RequiredArgsConstructor;

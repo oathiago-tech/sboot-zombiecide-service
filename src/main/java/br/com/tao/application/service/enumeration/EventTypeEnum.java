@@ -5,5 +5,6 @@ public enum EventTypeEnum {
       ZOMBIE_SCANNED,
       ZOMBIE_KILL,
       DAMAGE_ASSIGNED,
+      DAMAGE_REVERTED,
       TURN_STARTED;
 }

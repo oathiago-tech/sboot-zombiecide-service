@@ -1,8 +1,8 @@
 package br.com.tao.adapter.out.persistence.tag.entity;
 
-import br.com.tao.application.service.enumeration.TagTypeEnum;
 import br.com.tao.adapter.out.persistence.item.entity.ItemEntity;
 import br.com.tao.adapter.out.persistence.zombie.entity.ZombieEntity;
+import br.com.tao.application.service.enumeration.TagTypeEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

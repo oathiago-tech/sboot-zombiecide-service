@@ -1,6 +1,5 @@
 package br.com.tao.application.service.player;
 
-import br.com.tao.usecase.in.match.CreateMatchUseCase;
 import br.com.tao.usecase.in.player.CreatePlayerUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
