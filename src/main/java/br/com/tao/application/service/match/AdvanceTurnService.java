@@ -27,20 +27,54 @@ public class AdvanceTurnService {
                   throw new IllegalStateException("Active match has no players");
             }
 
+            // Pula jogadores sem vida (life <= 0). Se não houver ninguém vivo, pula a fase PLAYER inteira.
             if (match.getTurnPhase() == TurnPhase.PLAYER) {
-                  int idx = match.getCurrentTurnIndex() == null ? 0 : match.getCurrentTurnIndex();
-                  if (idx < playerCount - 1) {
-                        match.setCurrentTurnIndex(idx + 1);
+                  int startIdx = match.getCurrentTurnIndex() == null ? 0 : match.getCurrentTurnIndex();
+                  int nextAliveIdx = -1;
+
+                  for (int i = startIdx + 1; i < playerCount; i++) {
+                        Integer life = match.getPlayers().get(i).getLife();
+                        if (life != null && life > 0) {
+                              nextAliveIdx = i;
+                              break;
+                        }
+                  }
+
+                  if (nextAliveIdx >= 0) {
+                        match.setCurrentTurnIndex(nextAliveIdx);
                   } else {
                         match.setTurnPhase(TurnPhase.ZOMBIE);
                         match.setCurrentTurnIndex(0);
                   }
             } else {
-                  match.setTurnPhase(TurnPhase.PLAYER);
-                  match.setCurrentTurnIndex(0);
+                  int firstAliveIdx = -1;
+                  for (int i = 0; i < playerCount; i++) {
+                        Integer life = match.getPlayers().get(i).getLife();
+                        if (life != null && life > 0) {
+                              firstAliveIdx = i;
+                              break;
+                        }
+                  }
+
+                  if (firstAliveIdx >= 0) {
+                        match.setTurnPhase(TurnPhase.PLAYER);
+                        match.setCurrentTurnIndex(firstAliveIdx);
+                  } else {
+                        match.setTurnPhase(TurnPhase.ZOMBIE);
+                        match.setCurrentTurnIndex(0);
+                  }
             }
 
             MatchEntity saved = matchJpaRepository.save(match);
+
+            String currentPlayerId =
+                  saved.getTurnPhase() != TurnPhase.PLAYER
+                        ? null
+                        : (saved.getCurrentTurnIndex() == null
+                        ? null
+                        : (saved.getPlayers() == null || saved.getPlayers().isEmpty()
+                        ? null
+                        : saved.getPlayers().get(saved.getCurrentTurnIndex()).getId().toString()));
 
             return Match.builder()
                   .id(saved.getId().toString())
@@ -61,7 +95,7 @@ public class AdvanceTurnService {
                               .build())
                         .toList())
                   .turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
-                  .currentPlayerId(saved.getCurrentTurnIndex() == null ? null : saved.getPlayers().get(saved.getCurrentTurnIndex()).getId().toString())
+                  .currentPlayerId(currentPlayerId)
                   .currentTurnIndex(saved.getCurrentTurnIndex())
                   .build();
       }
