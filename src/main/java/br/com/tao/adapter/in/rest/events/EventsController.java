@@ -20,8 +20,8 @@ public class EventsController {
 
       @PostMapping("/nfc")
       public ResponseEntity<Void> nfc(@RequestBody NfcEventRequest request) {
-            log.info("NFC EVENT: type={}", request.getEventType());
-            nfcEventApplicationService.applyNfcEvent(request.getEventType());
+            log.info("NFC EVENT: type={}", request.getTag());
+//            nfcEventApplicationService.applyNfcEvent(request.getTag());
             return ResponseEntity.noContent().build();
       }
 
@@ -37,6 +37,6 @@ public class EventsController {
 
       @Data
       public static class NfcEventRequest {
-            private String eventType;
+            private String tag;
       }
 }
