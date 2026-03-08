@@ -32,12 +32,12 @@ public class SerialNfcService {
       @PostConstruct
       public void startListening() {
             if (!props.enabled()) {
-                  log.info("Serial NFC desabilitado (serial.nfc.enabled=false).");
+                  log.info("NFC SERIAL DISABLED (serial.nfc.enabled=false).");
                   return;
             }
 
             if (!started.compareAndSet(false, true)) {
-                  log.warn("Serial NFC já estava iniciado; ignorando start duplicado.");
+                  log.warn("NFC SERIAL ALREADY STARTED. DISCARD DUPLICATED");
                   return;
             }
 
@@ -46,11 +46,11 @@ public class SerialNfcService {
 
             if (!serialPort.openPort()) {
                   started.set(false);
-                  log.error("Erro ao abrir porta serial NFC: {}", props.port());
+                  log.error("ERROR WHILE OPEN NFC SERIAL PORT: {}", props.port());
                   return;
             }
 
-            log.info("Serial NFC conectada: {} (baudRate={})", props.port(), props.baudRate());
+            log.info("NCF SERIAL CONNECTED: {} (baudRate={})", props.port(), props.baudRate());
 
             serialPort.addDataListener(new SerialPortDataListener() {
 
@@ -80,7 +80,8 @@ public class SerialNfcService {
             try {
                   serialPort.removeDataListener();
             } catch (Exception e) {
-                  log.debug("Falha ao remover dataListener da serial NFC.", e);
+                  log.debug("FAIL TO REMOVE DATA LISTENER FROM NFC SERIAL.",
+                        e);
             }
 
             try {
@@ -88,13 +89,13 @@ public class SerialNfcService {
                         serialPort.closePort();
                   }
             } catch (Exception e) {
-                  log.debug("Falha ao fechar porta serial NFC.", e);
+                  log.debug("FAIL TO CLOSE NFC SERIAL PORT.", e);
             } finally {
                   serialPort = null;
                   buffer.setLength(0);
             }
 
-            log.info("Serial NFC finalizada.");
+            log.info("SERIAL NFC FINISHED.");
       }
 
       private void onDataAvailable() {
@@ -127,19 +128,18 @@ public class SerialNfcService {
                         continue;
                   }
 
-                  log.info("TAG NFC recebida: {}", tagId);
+                  log.info("TAG NFC RECEIVED: {}", tagId);
 
                   try {
                         nfcEventApplicationService.applyNfcEvent(tagId);
                   } catch (Exception e) {
-                        log.error("Erro ao processar TAG NFC [{}].", tagId, e);
+                        log.error("ERROR WHILE PROCESSING TAG NFC {}.", tagId, e);
                   }
             }
       }
 
       private static String normalizeTag(String rawLine) {
             if (rawLine == null) return "";
-            // remove CR e espaços; se seu leitor manda "UID: xxxx", você pode tratar aqui também
             return rawLine.replace("\r", "").trim();
       }
 
