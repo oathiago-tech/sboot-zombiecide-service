@@ -11,6 +11,7 @@ public enum CharacterEnum {
       WANDA;
 
       public static CharacterEnum getCharacter(String difficult) {
-            return Arrays.stream(CharacterEnum.values()).filter(d -> d.name().equalsIgnoreCase(difficult)).findFirst().orElseThrow();
+            return Arrays.stream(CharacterEnum.values()).filter(d -> d.name().equalsIgnoreCase(difficult)).findFirst()
+                  .orElseThrow();
       }
 }

@@ -14,7 +14,8 @@ import java.util.List;
 @Slf4j
 public class GetMatchsService implements GetMatchsUseCase {
 
-      private final MatchRepositoryAdapter adapter;;
+      private final MatchRepositoryAdapter adapter;
+      ;
 
       @Override
       public List<Match> getMatchs() {
@@ -22,7 +23,7 @@ public class GetMatchsService implements GetMatchsUseCase {
       }
 
       @Override
-      public Match getActiveMatch(){
+      public Match getActiveMatch() {
             return adapter.findActiveMatch();
       }
 }

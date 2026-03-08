@@ -32,15 +32,13 @@ public class MatchRepositoryAdapter implements MatchRepository {
 
       @Override
       public List<Match> findAll() {
-            return repository.findAll()
-                  .stream()
-                  .map(MatchRepositoryAdapter::toDomain)
-                  .toList();
+            return repository.findAll().stream().map(MatchRepositoryAdapter::toDomain).toList();
       }
 
       @Override
       public Match findActiveMatch() {
-            return MatchRepositoryAdapter.toDomain(Objects.requireNonNull(repository.findByActive(Boolean.TRUE).orElse(null)));
+            return MatchRepositoryAdapter.toDomain(
+                  Objects.requireNonNull(repository.findByActive(Boolean.TRUE).orElse(null)));
       }
 
       private static MatchEntity toEntity(Match match) {
@@ -49,7 +47,8 @@ public class MatchRepositoryAdapter implements MatchRepository {
             }
 
             if (match.getPlayers() != null && match.getPlayers().size() > MAX_PLAYERS) {
-                  throw new IllegalArgumentException("MAX PLAYERS IS " + MAX_PLAYERS + ", GOT " + match.getPlayers().size());
+                  throw new IllegalArgumentException(
+                        "MAX PLAYERS IS " + MAX_PLAYERS + ", GOT " + match.getPlayers().size());
             }
 
             MatchEntity entity = new MatchEntity();
@@ -59,7 +58,7 @@ public class MatchRepositoryAdapter implements MatchRepository {
             entity.setCreatedAt(OffsetDateTime.now());
 
             if (match.getPlayers() != null) {
-                  for (MatchPlayer p : match.getPlayers()) {
+                  for(MatchPlayer p : match.getPlayers()) {
                         if (p == null) continue;
                         if (p.getName() == null || p.getName().isBlank()) continue;
                         if (p.getCharacter() == null || p.getCharacter().isBlank()) continue;
@@ -77,18 +76,11 @@ public class MatchRepositoryAdapter implements MatchRepository {
       }
 
       private static Match toDomain(MatchEntity entity) {
-            var players = entity.getPlayers() == null
-                  ? Collections.<MatchPlayer>emptyList()
-                  : entity.getPlayers().stream()
-                  .map(p -> MatchPlayer.builder()
-                        .id(p.getId() == null ? null : p.getId().toString())
-                        .name(p.getName())
-                        .character(p.getCharacter() == null ? null : p.getCharacter().name())
-                        .life(p.getLife())
-                        .level(p.getLevel())
-                        .zombiesKill(p.getZombiesKill())
-                        .build())
-                  .toList();
+            var players = entity.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : entity.getPlayers()
+                  .stream()
+                  .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName())
+                        .character(p.getCharacter() == null ? null : p.getCharacter().name()).life(p.getLife())
+                        .level(p.getLevel()).zombiesKill(p.getZombiesKill()).build()).toList();
 
             String turnPhase = entity.getTurnPhase() == null ? null : entity.getTurnPhase().name();
             Integer idx = entity.getCurrentTurnIndex();
@@ -98,16 +90,10 @@ public class MatchRepositoryAdapter implements MatchRepository {
                   currentPlayerId = players.get(idx).getId();
             }
 
-            return Match.builder()
-                  .id(entity.getId() == null ? null : entity.getId().toString())
+            return Match.builder().id(entity.getId() == null ? null : entity.getId().toString())
                   .campaignName(entity.getCampaignName())
                   .difficulty(entity.getDifficulty() == null ? null : entity.getDifficulty().name())
-                  .active(Boolean.TRUE.equals(entity.getActive()))
-                  .createdAt(entity.getCreatedAt())
-                  .players(players)
-                  .turnPhase(turnPhase)
-                  .currentTurnIndex(idx)
-                  .currentPlayerId(currentPlayerId)
-                  .build();
+                  .active(Boolean.TRUE.equals(entity.getActive())).createdAt(entity.getCreatedAt()).players(players)
+                  .turnPhase(turnPhase).currentTurnIndex(idx).currentPlayerId(currentPlayerId).build();
       }
 }

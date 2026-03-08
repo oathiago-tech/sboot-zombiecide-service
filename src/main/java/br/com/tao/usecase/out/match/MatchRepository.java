@@ -6,6 +6,8 @@ import java.util.List;
 
 public interface MatchRepository {
       Match save(Match match);
+
       List<Match> findAll();
+
       Match findActiveMatch();
 }

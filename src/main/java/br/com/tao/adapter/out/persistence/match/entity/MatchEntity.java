@@ -14,41 +14,48 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "matches", schema = "zombicide")
+@Table (name = "matches", schema = "zombicide")
 @Getter
 @Setter
 public class MatchEntity {
 
       @Id
-      @GeneratedValue(strategy = GenerationType.UUID)
+      @GeneratedValue (strategy = GenerationType.UUID)
       private UUID id;
 
-      @Column(name = "campaign_name", nullable = false, length = 255)
+      @Column (name = "campaign_name", nullable = false, length = 255)
       private String campaignName;
 
-      @Enumerated(EnumType.STRING)
-      @Column(name = "difficulty", nullable = false, length = 50)
+      @Enumerated (EnumType.STRING)
+      @Column (name = "difficulty", nullable = false, length = 50)
       private DifficultyEnum difficulty;
 
-      @Column(name = "active", nullable = false)
+      @Column (name = "active", nullable = false)
       private Boolean active = Boolean.FALSE;
 
-      @Column(name = "created_at", nullable = false)
+      @Column (name = "created_at", nullable = false)
       private OffsetDateTime createdAt;
 
-      @Enumerated(EnumType.STRING)
+      @Enumerated (EnumType.STRING)
       @JdbcTypeCode (SqlTypes.NAMED_ENUM)
-      @Column(name = "turn_phase", nullable = false, columnDefinition = "zombicide.turn_phase")
+      @Column (name = "turn_phase", nullable = false, columnDefinition = "zombicide.turn_phase")
       private TurnPhase turnPhase = TurnPhase.PLAYER;
 
-      @Column(name = "current_turn_index", nullable = false)
+      @Column (name = "current_turn_index", nullable = false)
       private Integer currentTurnIndex = 0;
 
-      @OneToMany(
-            mappedBy = "match",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-      )
+      @Column (name = "active_walkers", nullable = false)
+      private Integer activeWalkers = 0;
+
+      @Column (name = "active_runners", nullable = false)
+      private Integer activeRunners = 0;
+
+      @Column (name = "active_faties", nullable = false)
+      private Integer activeFaties = 0;
+
+      @Column (name = "active_abomination", nullable = false)
+      private Integer activeAbomination = 0;
+
+      @OneToMany (mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
       private List<MatchPlayerEntity> players = new ArrayList<>();
 }

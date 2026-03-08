@@ -16,7 +16,7 @@ public class StartMatchController {
 
       private final StartMatchUseCase useCase;
 
-      @PostMapping("/start")
+      @PostMapping ("/start")
       public ResponseEntity<Match> start(@RequestParam ("match") String matchId) {
             return ResponseEntity.ok(useCase.startMatch(matchId));
       }

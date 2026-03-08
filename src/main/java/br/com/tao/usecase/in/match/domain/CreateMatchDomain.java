@@ -10,5 +10,6 @@ import java.util.List;
 public class CreateMatchDomain {
       private CreateMatchCampaignDomain campaign;
       private String difficult;
-      private List<CreateMatchPlayerDomain> players;;
+      private List<CreateMatchPlayerDomain> players;
+      ;
 }

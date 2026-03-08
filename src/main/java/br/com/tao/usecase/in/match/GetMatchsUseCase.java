@@ -6,5 +6,6 @@ import java.util.List;
 
 public interface GetMatchsUseCase {
       List<Match> getMatchs();
+
       Match getActiveMatch();
 }

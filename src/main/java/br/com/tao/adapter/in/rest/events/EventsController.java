@@ -11,26 +11,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/events")
+@RequestMapping ("/events")
 @Slf4j
 @RequiredArgsConstructor
 public class EventsController {
 
       private final NfcEventApplicationService nfcEventApplicationService;
 
-      @PostMapping("/nfc")
+      @PostMapping ("/nfc")
       public ResponseEntity<Void> nfc(@RequestBody NfcEventRequest request) {
             log.info("NFC EVENT: type={}", request.getTag());
-//            nfcEventApplicationService.applyNfcEvent(request.getTag());
+            //            nfcEventApplicationService.applyNfcEvent(request.getTag());
             return ResponseEntity.noContent().build();
       }
 
-      @PostMapping("/create")
+      @PostMapping ("/create")
       public void createEvent(@RequestBody String body) {
             log.info("EVENT: {}", body);
       }
 
-      @PostMapping("")
+      @PostMapping ("")
       public void processEvent(@RequestBody String body) {
             log.info("EVENT: {}", body);
       }

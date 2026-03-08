@@ -18,12 +18,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@EnableConfigurationProperties(SerialNfcProperties.class)
+@EnableConfigurationProperties (SerialNfcProperties.class)
 public class SerialNfcService {
 
       private final SerialNfcProperties props;
       private final NfcEventApplicationService nfcEventApplicationService;
-      private final TagReadSoundService tagReadSoundService;
 
       private final AtomicBoolean started = new AtomicBoolean(false);
       private final StringBuilder buffer = new StringBuilder();
@@ -129,13 +128,12 @@ public class SerialNfcService {
                   }
 
                   log.info("TAG NFC recebida: {}", tagId);
-                  tagReadSoundService.play();
 
-//                  try {
-//                        nfcEventApplicationService.applyNfcEvent(tagId);
-//                  } catch (Exception e) {
-//                        log.error("Erro ao processar TAG NFC [{}].", tagId, e);
-//                  }
+                  try {
+                        nfcEventApplicationService.applyNfcEvent(tagId);
+                  } catch (Exception e) {
+                        log.error("Erro ao processar TAG NFC [{}].", tagId, e);
+                  }
             }
       }
 
@@ -146,7 +144,7 @@ public class SerialNfcService {
       }
 
       private static int indexOfLineBreak(StringBuilder sb) {
-            for (int i = 0; i < sb.length(); i++) {
+            for(int i = 0; i < sb.length(); i++) {
                   char c = sb.charAt(i);
                   if (c == '\n' || c == '\r') return i;
             }

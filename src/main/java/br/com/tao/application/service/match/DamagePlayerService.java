@@ -11,7 +11,6 @@ import br.com.tao.application.service.enumeration.TurnPhase;
 import br.com.tao.domain.match.model.Match;
 import br.com.tao.domain.match.model.MatchPlayer;
 import br.com.tao.usecase.in.match.DamagePlayerUseCase;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -48,13 +47,16 @@ public class DamagePlayerService implements DamagePlayerUseCase {
             }
 
             // Lock para evitar concorrência com outros eventos NFC/dano/turno
-            MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate().orElseThrow(() -> new IllegalStateException("No active match"));
+            MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate()
+                  .orElseThrow(() -> new IllegalStateException("No active match"));
 
             if (match.getTurnPhase() != TurnPhase.ZOMBIE) {
                   throw new IllegalStateException("Damage can only be applied during ZOMBIE phase");
             }
 
-            MatchPlayerEntity target = match.getPlayers().stream().filter(p -> p.getId() != null && p.getId().equals(playerId)).findFirst().orElseThrow(() -> new IllegalArgumentException("Player not found in active match: " + matchPlayerId));
+            MatchPlayerEntity target = match.getPlayers().stream()
+                  .filter(p -> p.getId() != null && p.getId().equals(playerId)).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException("Player not found in active match: " + matchPlayerId));
 
             int previousLife = target.getLife() == null ? 0 : target.getLife();
             int newLife = Math.max(0, previousLife - amount);
@@ -62,8 +64,8 @@ public class DamagePlayerService implements DamagePlayerUseCase {
 
             MatchEntity savedMatch = matchJpaRepository.save(match);
 
-            JsonNode payloadJson = objectMapper.valueToTree(new DamagePayload(matchPlayerId, amount, previousLife,
-                  newLife));
+            JsonNode payloadJson = objectMapper.valueToTree(
+                  new DamagePayload(matchPlayerId, amount, previousLife, newLife));
 
             MatchEventEntity event = new MatchEventEntity();
             event.setMatch(savedMatch);
@@ -78,7 +80,11 @@ public class DamagePlayerService implements DamagePlayerUseCase {
       }
 
       private static Match toDomain(MatchEntity entity) {
-            var players = entity.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : entity.getPlayers().stream().map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName()).character(p.getCharacter() == null ? null : p.getCharacter().name()).life(p.getLife()).level(p.getLevel()).zombiesKill(p.getZombiesKill()).build()).toList();
+            var players = entity.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : entity.getPlayers()
+                  .stream()
+                  .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName())
+                        .character(p.getCharacter() == null ? null : p.getCharacter().name()).life(p.getLife())
+                        .level(p.getLevel()).zombiesKill(p.getZombiesKill()).build()).toList();
 
             String turnPhase = entity.getTurnPhase() == null ? null : entity.getTurnPhase().name();
             Integer idx = entity.getCurrentTurnIndex();
@@ -88,6 +94,10 @@ public class DamagePlayerService implements DamagePlayerUseCase {
                   currentPlayerId = players.get(idx).getId();
             }
 
-            return Match.builder().id(entity.getId() == null ? null : entity.getId().toString()).campaignName(entity.getCampaignName()).difficulty(entity.getDifficulty() == null ? null : entity.getDifficulty().name()).active(Boolean.TRUE.equals(entity.getActive())).createdAt(entity.getCreatedAt()).players(players).turnPhase(turnPhase).currentTurnIndex(idx).currentPlayerId(currentPlayerId).build();
+            return Match.builder().id(entity.getId() == null ? null : entity.getId().toString())
+                  .campaignName(entity.getCampaignName())
+                  .difficulty(entity.getDifficulty() == null ? null : entity.getDifficulty().name())
+                  .active(Boolean.TRUE.equals(entity.getActive())).createdAt(entity.getCreatedAt()).players(players)
+                  .turnPhase(turnPhase).currentTurnIndex(idx).currentPlayerId(currentPlayerId).build();
       }
 }

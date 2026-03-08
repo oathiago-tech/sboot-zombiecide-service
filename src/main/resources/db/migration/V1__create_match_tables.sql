@@ -1,13 +1,14 @@
 CREATE SCHEMA IF NOT EXISTS zombicide;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE
+EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE zombicide.matches
 (
-    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    campaign_name  VARCHAR(255) NOT NULL,
-    difficulty     VARCHAR(50)  NOT NULL,
-    active         BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at     TIMESTAMPTZ  NOT NULL DEFAULT now()
+    id            UUID PRIMARY KEY      DEFAULT gen_random_uuid(),
+    campaign_name VARCHAR(255) NOT NULL,
+    difficulty    VARCHAR(50)  NOT NULL,
+    active        BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_matches_one_active
@@ -16,7 +17,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_matches_one_active
 
 CREATE TABLE zombicide.match_players
 (
-    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id               UUID PRIMARY KEY      DEFAULT gen_random_uuid(),
     match_id         UUID         NOT NULL,
     player_name      VARCHAR(255) NOT NULL,
     player_character VARCHAR(255) NOT NULL,
@@ -47,33 +48,76 @@ CREATE TABLE zombicide.zombies
 
 CREATE TABLE IF NOT EXISTS zombicide.tags
 (
-    id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tag_uid  VARCHAR(255) NOT NULL UNIQUE,      -- UID real da tag NFC
-    tag_type VARCHAR(50)  NOT NULL,             -- ex: ITEM_CARD, ZOMBIE_CARD
-    item_id  UUID,
+    id
+    UUID
+    PRIMARY
+    KEY
+    DEFAULT
+    gen_random_uuid
+(
+),
+    tag_uid VARCHAR
+(
+    255
+) NOT NULL UNIQUE, -- UID real da tag NFC
+    tag_type VARCHAR
+(
+    50
+) NOT NULL, -- ex: ITEM_CARD, ZOMBIE_CARD
+    item_id UUID,
     zombie_id UUID,
-    active   BOOLEAN      NOT NULL DEFAULT TRUE,
-
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT fk_tags_item
-    FOREIGN KEY (item_id) REFERENCES zombicide.items (id),
+    FOREIGN KEY
+(
+    item_id
+) REFERENCES zombicide.items
+(
+    id
+),
     CONSTRAINT fk_tags_zombie
-    FOREIGN KEY (zombie_id) REFERENCES zombicide.zombies (id),
+    FOREIGN KEY
+(
+    zombie_id
+) REFERENCES zombicide.zombies
+(
+    id
+),
 
     -- Garante que a tag aponte para exatamente um tipo de carta
     CONSTRAINT ck_tags_exactly_one_target
-    CHECK (
-(item_id IS NOT NULL AND zombie_id IS NULL)
+    CHECK
+(
+(
+    item_id
+    IS
+    NOT
+    NULL
+    AND
+    zombie_id
+    IS
+    NULL
+)
     OR
-(item_id IS NULL AND zombie_id IS NOT NULL)
+(
+    item_id
+    IS
+    NULL
+    AND
+    zombie_id
+    IS
+    NOT
+    NULL
+)
     )
     );
 
 -- Inventário: itens por jogador da partida
 CREATE TABLE zombicide.match_player_items
 (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    match_player_id UUID NOT NULL,
-    item_id         UUID NOT NULL,
+    id              UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    match_player_id UUID        NOT NULL,
+    item_id         UUID        NOT NULL,
     acquired_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT fk_mpi_player
@@ -90,13 +134,13 @@ CREATE INDEX IF NOT EXISTS idx_mpi_player
 
 CREATE TABLE zombicide.match_events
 (
-    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    match_id   UUID NOT NULL,
+    id                    UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    match_id              UUID        NOT NULL,
     actor_match_player_id UUID,
-    event_type VARCHAR(50) NOT NULL,
-    tag_uid    VARCHAR(255),
-    payload    JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    event_type            VARCHAR(50) NOT NULL,
+    tag_uid               VARCHAR(255),
+    payload               JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     CONSTRAINT fk_events_match
         FOREIGN KEY (match_id) REFERENCES zombicide.matches (id) ON DELETE CASCADE,

@@ -39,7 +39,8 @@ public class RevertDamageService implements RevertDamageUseCase {
                   throw new IllegalArgumentException("Invalid damageEventId (UUID): " + damageEventId, e);
             }
 
-            MatchEventEntity damageEvent = matchEventJpaRepository.findById(eventId).orElseThrow(() -> new IllegalArgumentException("Damage event not found: " + damageEventId));
+            MatchEventEntity damageEvent = matchEventJpaRepository.findById(eventId)
+                  .orElseThrow(() -> new IllegalArgumentException("Damage event not found: " + damageEventId));
 
             if (damageEvent.getEventType() != EventTypeEnum.DAMAGE_ASSIGNED) {
                   throw new IllegalArgumentException("Event is not DAMAGE_ASSIGNED: " + damageEventId);
@@ -53,11 +54,15 @@ public class RevertDamageService implements RevertDamageUseCase {
             }
 
             // Lock na partida ativa (ou, alternativamente, buscar por matchId do evento)
-            MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate().orElseThrow(() -> new IllegalStateException("No active match"));
+            MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate()
+                  .orElseThrow(() -> new IllegalStateException("No active match"));
 
             UUID playerId = UUID.fromString(payload.matchPlayerId());
 
-            MatchPlayerEntity target = match.getPlayers().stream().filter(p -> p.getId() != null && p.getId().equals(playerId)).findFirst().orElseThrow(() -> new IllegalArgumentException("Player not found in active match: " + payload.matchPlayerId()));
+            MatchPlayerEntity target = match.getPlayers().stream()
+                  .filter(p -> p.getId() != null && p.getId().equals(playerId)).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(
+                              "Player not found in active match: " + payload.matchPlayerId()));
 
             target.setLife(payload.previousLife());
 
@@ -75,7 +80,11 @@ public class RevertDamageService implements RevertDamageUseCase {
       }
 
       private static Match toDomain(MatchEntity entity) {
-            var players = entity.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : entity.getPlayers().stream().map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName()).character(p.getCharacter() == null ? null : p.getCharacter().name()).life(p.getLife()).level(p.getLevel()).zombiesKill(p.getZombiesKill()).build()).toList();
+            var players = entity.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : entity.getPlayers()
+                  .stream()
+                  .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName())
+                        .character(p.getCharacter() == null ? null : p.getCharacter().name()).life(p.getLife())
+                        .level(p.getLevel()).zombiesKill(p.getZombiesKill()).build()).toList();
 
             String turnPhase = entity.getTurnPhase() == null ? null : entity.getTurnPhase().name();
             Integer idx = entity.getCurrentTurnIndex();
@@ -85,6 +94,10 @@ public class RevertDamageService implements RevertDamageUseCase {
                   currentPlayerId = players.get(idx).getId();
             }
 
-            return Match.builder().id(entity.getId() == null ? null : entity.getId().toString()).campaignName(entity.getCampaignName()).difficulty(entity.getDifficulty() == null ? null : entity.getDifficulty().name()).active(Boolean.TRUE.equals(entity.getActive())).createdAt(entity.getCreatedAt()).players(players).turnPhase(turnPhase).currentTurnIndex(idx).currentPlayerId(currentPlayerId).build();
+            return Match.builder().id(entity.getId() == null ? null : entity.getId().toString())
+                  .campaignName(entity.getCampaignName())
+                  .difficulty(entity.getDifficulty() == null ? null : entity.getDifficulty().name())
+                  .active(Boolean.TRUE.equals(entity.getActive())).createdAt(entity.getCreatedAt()).players(players)
+                  .turnPhase(turnPhase).currentTurnIndex(idx).currentPlayerId(currentPlayerId).build();
       }
 }

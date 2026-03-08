@@ -35,28 +35,14 @@ public class StartMatchService implements StartMatchUseCase {
             match.setActive(Boolean.TRUE);
             MatchEntity saved = matchJpaRepository.save(match);
 
-            return Match.builder()
-                  .id(saved.getId().toString())
-                  .campaignName(saved.getCampaignName())
-                  .difficulty(saved.getDifficulty().name())
-                  .active(true)
-                  .createdAt(saved.getCreatedAt())
-                  .players(saved.getPlayers() == null
-                        ? java.util.List.<MatchPlayer>of()
-                        : saved.getPlayers().stream()
-                        .map(p -> MatchPlayer.builder()
-                              .id(p.getId() == null ? null : p.getId().toString())
-                              .name(p.getName())
-                              .character(p.getCharacter() == null ? null : p.getCharacter().name())
-                              .life(p.getLife())
-                              .level(p.getLevel())
-                              .zombiesKill(p.getZombiesKill())
-                              .build())
-                        .toList()
-                  )
-                  .turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
-                  .currentTurnIndex(saved.getCurrentTurnIndex())
-                  .currentPlayerId(null)
-                  .build();
+            return Match.builder().id(saved.getId().toString()).campaignName(saved.getCampaignName())
+                  .difficulty(saved.getDifficulty().name()).active(true).createdAt(saved.getCreatedAt()).players(
+                        saved.getPlayers() == null ? java.util.List.<MatchPlayer>of() : saved.getPlayers().stream()
+                              .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString())
+                                    .name(p.getName())
+                                    .character(p.getCharacter() == null ? null : p.getCharacter().name())
+                                    .life(p.getLife()).level(p.getLevel()).zombiesKill(p.getZombiesKill()).build())
+                              .toList()).turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
+                  .currentTurnIndex(saved.getCurrentTurnIndex()).currentPlayerId(null).build();
       }
 }

@@ -32,7 +32,7 @@ public class AdvanceTurnService {
                   int startIdx = match.getCurrentTurnIndex() == null ? 0 : match.getCurrentTurnIndex();
                   int nextAliveIdx = -1;
 
-                  for (int i = startIdx + 1; i < playerCount; i++) {
+                  for(int i = startIdx + 1; i < playerCount; i++) {
                         Integer life = match.getPlayers().get(i).getLife();
                         if (life != null && life > 0) {
                               nextAliveIdx = i;
@@ -48,7 +48,7 @@ public class AdvanceTurnService {
                   }
             } else {
                   int firstAliveIdx = -1;
-                  for (int i = 0; i < playerCount; i++) {
+                  for(int i = 0; i < playerCount; i++) {
                         Integer life = match.getPlayers().get(i).getLife();
                         if (life != null && life > 0) {
                               firstAliveIdx = i;
@@ -67,36 +67,18 @@ public class AdvanceTurnService {
 
             MatchEntity saved = matchJpaRepository.save(match);
 
-            String currentPlayerId =
-                  saved.getTurnPhase() != TurnPhase.PLAYER
-                        ? null
-                        : (saved.getCurrentTurnIndex() == null
-                        ? null
-                        : (saved.getPlayers() == null || saved.getPlayers().isEmpty()
-                        ? null
-                        : saved.getPlayers().get(saved.getCurrentTurnIndex()).getId().toString()));
+            String currentPlayerId = saved.getTurnPhase() != TurnPhase.PLAYER ? null : (saved.getCurrentTurnIndex() == null ? null : (saved.getPlayers() == null || saved.getPlayers()
+                  .isEmpty() ? null : saved.getPlayers().get(saved.getCurrentTurnIndex()).getId().toString()));
 
-            return Match.builder()
-                  .id(saved.getId().toString())
-                  .campaignName(saved.getCampaignName())
-                  .difficulty(saved.getDifficulty().name())
-                  .active(Boolean.TRUE.equals(saved.getActive()))
-                  .createdAt(saved.getCreatedAt())
-                  .players(saved.getPlayers() == null
-                        ? Collections.emptyList()
-                        : saved.getPlayers().stream()
-                        .map(p -> MatchPlayer.builder()
-                              .id(p.getId() == null ? null : p.getId().toString())
-                              .name(p.getName())
-                              .character(p.getCharacter() == null ? null : p.getCharacter().name())
-                              .life(p.getLife())
-                              .level(p.getLevel())
-                              .zombiesKill(p.getZombiesKill())
-                              .build())
-                        .toList())
-                  .turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
-                  .currentPlayerId(currentPlayerId)
-                  .currentTurnIndex(saved.getCurrentTurnIndex())
-                  .build();
+            return Match.builder().id(saved.getId().toString()).campaignName(saved.getCampaignName())
+                  .difficulty(saved.getDifficulty().name()).active(Boolean.TRUE.equals(saved.getActive()))
+                  .createdAt(saved.getCreatedAt()).players(
+                        saved.getPlayers() == null ? Collections.emptyList() : saved.getPlayers().stream()
+                              .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString())
+                                    .name(p.getName())
+                                    .character(p.getCharacter() == null ? null : p.getCharacter().name())
+                                    .life(p.getLife()).level(p.getLevel()).zombiesKill(p.getZombiesKill()).build())
+                              .toList()).turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
+                  .currentPlayerId(currentPlayerId).currentTurnIndex(saved.getCurrentTurnIndex()).build();
       }
 }

@@ -22,4 +22,8 @@ public class Match {
       private String turnPhase;
       private Integer currentTurnIndex;
       private String currentPlayerId;
+      private Integer activeWalkers;
+      private Integer activeRunners;
+      private Integer activeFaties;
+      private Integer activeAbomination;
 }

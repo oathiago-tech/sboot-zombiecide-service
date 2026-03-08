@@ -35,18 +35,11 @@ public class PauseMatchService implements PauseMatchUseCase {
 
             MatchEntity saved = matchJpaRepository.save(match);
 
-            var players = saved.getPlayers() == null
-                  ? Collections.<MatchPlayer>emptyList()
-                  : saved.getPlayers().stream()
-                  .map(p -> MatchPlayer.builder()
-                        .id(p.getId() == null ? null : p.getId().toString())
-                        .name(p.getName())
-                        .character(p.getCharacter() == null ? null : p.getCharacter().name())
-                        .life(p.getLife())
-                        .level(p.getLevel())
-                        .zombiesKill(p.getZombiesKill())
-                        .build())
-                  .toList();
+            var players = saved.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : saved.getPlayers()
+                  .stream()
+                  .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName())
+                        .character(p.getCharacter() == null ? null : p.getCharacter().name()).life(p.getLife())
+                        .level(p.getLevel()).zombiesKill(p.getZombiesKill()).build()).toList();
 
             String turnPhase = saved.getTurnPhase() == null ? null : saved.getTurnPhase().name();
             Integer idx = saved.getCurrentTurnIndex();
@@ -56,16 +49,10 @@ public class PauseMatchService implements PauseMatchUseCase {
                   currentPlayerId = players.get(idx).getId();
             }
 
-            return Match.builder()
-                  .id(saved.getId() == null ? null : saved.getId().toString())
+            return Match.builder().id(saved.getId() == null ? null : saved.getId().toString())
                   .campaignName(saved.getCampaignName())
-                  .difficulty(saved.getDifficulty() == null ? null : saved.getDifficulty().name())
-                  .active(false)
-                  .createdAt(saved.getCreatedAt())
-                  .players(players)
-                  .turnPhase(turnPhase)
-                  .currentTurnIndex(idx)
-                  .currentPlayerId(currentPlayerId)
-                  .build();
+                  .difficulty(saved.getDifficulty() == null ? null : saved.getDifficulty().name()).active(false)
+                  .createdAt(saved.getCreatedAt()).players(players).turnPhase(turnPhase).currentTurnIndex(idx)
+                  .currentPlayerId(currentPlayerId).build();
       }
 }

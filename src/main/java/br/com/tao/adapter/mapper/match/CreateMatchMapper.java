@@ -19,7 +19,8 @@ public final class CreateMatchMapper {
                   return null;
             }
 
-            return Match.builder().campaignName(dto.getCampaign().getName()).difficulty(dto.getDifficult()).players(toPlayerDomainList(dto.getPlayers())).build();
+            return Match.builder().campaignName(dto.getCampaign().getName()).difficulty(dto.getDifficult())
+                  .players(toPlayerDomainList(dto.getPlayers())).build();
       }
 
       private static List<MatchPlayer> toPlayerDomainList(List<CreateMatchPlayerRequestDTO> players) {
