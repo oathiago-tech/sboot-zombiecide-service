@@ -75,7 +75,7 @@ public class MatchRepositoryAdapter implements MatchRepository {
             return entity;
       }
 
-      private static Match toDomain(MatchEntity entity) {
+      public static Match toDomain(MatchEntity entity) {
             var players = entity.getPlayers() == null ? Collections.<MatchPlayer>emptyList() : entity.getPlayers()
                   .stream()
                   .map(p -> MatchPlayer.builder().id(p.getId() == null ? null : p.getId().toString()).name(p.getName())
