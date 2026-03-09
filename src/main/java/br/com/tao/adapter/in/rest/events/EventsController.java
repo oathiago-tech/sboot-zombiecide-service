@@ -1,14 +1,12 @@
 package br.com.tao.adapter.in.rest.events;
 
 import br.com.tao.application.service.nfc.NfcEventApplicationService;
+import br.com.tao.application.service.nfc.domain.EventResponseDomain;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping ("/events")
@@ -38,5 +36,10 @@ public class EventsController {
       @Data
       public static class NfcEventRequest {
             private String tag;
+      }
+
+      @GetMapping ("/last")
+      public EventResponseDomain getLastEvent() {
+            return nfcEventApplicationService.getLastEvent();
       }
 }

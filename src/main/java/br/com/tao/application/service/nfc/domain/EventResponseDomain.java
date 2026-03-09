@@ -5,6 +5,7 @@ import br.com.tao.application.service.enumeration.SpawnPointTypeEnum;
 import br.com.tao.application.service.enumeration.TurnPhase;
 import br.com.tao.application.service.enumeration.ZombieTypeEnum;
 
-public record ZombieRespawnPayloadDomain(DangerLevelEnum dangerLevel, SpawnPointTypeEnum spawnPointType, Integer amount,
-                                         Integer executionOrder, ZombieTypeEnum type, String cardKey, String cardName, TurnPhase turnPhase) {
+public record EventResponseDomain(DangerLevelEnum dangerLevel, SpawnPointTypeEnum spawnPointType, Integer amount,
+                                  Integer executionOrder, ZombieTypeEnum type, String cardKey, String cardName,
+                                  TurnPhase turnPhase) {
 }

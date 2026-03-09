@@ -144,7 +144,7 @@ public class SerialNfcService {
                                           "SPAWN|TYPE=%s|AMOUNT=%d\n",
                                           payload.type(),
                                           payload.amount()
-                                    ) : payload.type().name() + " GET AN EXTRA TURN!" ;
+                                    ) : payload.type().name() + " GET AN         EXTRA TURN" ;
                               } else {
                                     message = "CREATE MESSAGE FOR PLAYER TURN!";
                               }

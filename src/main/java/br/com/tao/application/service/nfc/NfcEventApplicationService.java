@@ -9,7 +9,7 @@ import br.com.tao.adapter.out.persistence.matchevents.repository.MatchEventJpaRe
 import br.com.tao.adapter.out.persistence.tag.entity.TagEntity;
 import br.com.tao.adapter.out.persistence.tag.repository.TagJpaRepository;
 import br.com.tao.application.service.enumeration.*;
-import br.com.tao.application.service.nfc.domain.ZombieRespawnPayloadDomain;
+import br.com.tao.application.service.nfc.domain.EventResponseDomain;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class NfcEventApplicationService {
       ;
 
       @Transactional
-      public ZombieRespawnPayloadDomain applyNfcEvent(String tagUid) {
+      public EventResponseDomain applyNfcEvent(String tagUid) {
             if (tagUid == null || tagUid.isBlank()) {
                   throw new IllegalArgumentException("tagUid is required");
             }
@@ -60,7 +60,7 @@ public class NfcEventApplicationService {
 
                         var z = tag.getZombie();
 
-                        ZombieRespawnPayloadDomain payload = zombieEvent == null ? null : new ZombieRespawnPayloadDomain(
+                        EventResponseDomain payload = zombieEvent == null ? null : new EventResponseDomain(
                               zombieEvent.getDangerLevel(), zombieEvent.getSpawnPointType(), zombieEvent.getAmount(),
                               zombieEvent.getExecutionOrder(), zombieEvent.getType(), z.getKey(), z.getName(),
                               match.getTurnPhase());
@@ -125,7 +125,17 @@ public class NfcEventApplicationService {
                         "Invalid currentTurnIndex=" + idx + " for players=" + match.getPlayers().size());
             }
 
-            MatchPlayerEntity actor = match.getPlayers().get(idx);
-            return actor;
+            return match.getPlayers().get(idx);
+      }
+
+      public EventResponseDomain getLastEvent() {
+            var event = matchEventJpaRepository.findFirstByOrderByCreatedAtDesc().orElse(null);
+            try {
+                  if (event != null )
+                        return objectMapper.treeToValue(event.getPayload(), EventResponseDomain.class);
+                  return null;
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                  throw new IllegalArgumentException("Invalid payload JSON for event " + event.getId(), e);
+            }
       }
 }
