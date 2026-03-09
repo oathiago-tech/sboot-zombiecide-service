@@ -63,7 +63,7 @@ public class NfcEventApplicationService {
                         EventResponseDomain payload = zombieEvent == null ? null : new EventResponseDomain(
                               zombieEvent.getDangerLevel(), zombieEvent.getSpawnPointType(), zombieEvent.getAmount(),
                               zombieEvent.getExecutionOrder(), zombieEvent.getType(), z.getKey(), z.getName(),
-                              match.getTurnPhase());
+                              match.getTurnPhase(), OffsetDateTime.now());
 
                         OffsetDateTime now = OffsetDateTime.now();
 

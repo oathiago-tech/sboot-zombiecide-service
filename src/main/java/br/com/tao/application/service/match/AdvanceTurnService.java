@@ -79,6 +79,8 @@ public class AdvanceTurnService {
                                     .character(p.getCharacter() == null ? null : p.getCharacter().name())
                                     .life(p.getLife()).level(p.getLevel()).zombiesKill(p.getZombiesKill()).build())
                               .toList()).turnPhase(saved.getTurnPhase() == null ? null : saved.getTurnPhase().name())
-                  .currentPlayerId(currentPlayerId).currentTurnIndex(saved.getCurrentTurnIndex()).build();
+                  .currentPlayerId(currentPlayerId).currentTurnIndex(saved.getCurrentTurnIndex())
+                  .activeWalkers(saved.getActiveWalkers()).activeRunners(saved.getActiveRunners())
+                  .activeFaties(saved.getActiveFaties()).activeAbomination(saved.getActiveAbomination()).build();
       }
 }
