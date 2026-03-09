@@ -14,7 +14,13 @@ Adafruit_PN532 nfc(21, 22);
 void showTapScreen() {
   display.clearDisplay();
   display.setCursor(0,0);
-  display.println("ZOMBICIDE");
+  display.setTextSize(2);
+  display.println("ZOMBICIDE!");
+
+  display.setCursor(0,20);
+  display.setTextSize(1);
+  display.println("TAP THE TAG");
+
   display.display();
 }
 
@@ -43,12 +49,12 @@ void setup() {
 
   if (!versiondata) {
 
-    Serial.println("PN532 nao encontrado");
+    Serial.println("PN532 NOT FOUND");
 
     display.clearDisplay();
     display.setCursor(0,0);
-    display.println("PN532 NAO");
-    display.println("ENCONTRADO");
+    display.println("PN532 NOT");
+    display.println("FOUND");
     display.display();
 
     while (1);
@@ -96,8 +102,10 @@ void loop() {
 
     display.clearDisplay();
     display.setCursor(0,0);
+    display.setTextSize(2);
     display.println("TAG READ:");
     display.setCursor(0,20);
+    display.setTextSize(2);
     display.println(tagID);
     display.display();
 
@@ -141,6 +149,7 @@ void showEvent(String msg) {
     String type = extractValue(msg, "TYPE");
     String amount = extractValue(msg, "AMOUNT");
 
+    display.setTextSize(2);
     display.println("SPAWN!!!");
 
     display.setCursor(0,20);
@@ -152,11 +161,14 @@ void showEvent(String msg) {
 
   } else {
 
+    display.setTextSize(2);
     display.println("EVENT:");
     display.setCursor(0,20);
+    display.setTextSize(1);
     display.println(msg);
   }
 
+  display.setTextSize(2);
   display.display();
 }
 
