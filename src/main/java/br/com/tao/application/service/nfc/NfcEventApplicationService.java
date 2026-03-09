@@ -31,7 +31,7 @@ public class NfcEventApplicationService {
       ;
 
       @Transactional
-      public void applyNfcEvent(String tagUid) {
+      public ZombieRespawnPayloadDomain applyNfcEvent(String tagUid) {
             if (tagUid == null || tagUid.isBlank()) {
                   throw new IllegalArgumentException("tagUid is required");
             }
@@ -43,11 +43,11 @@ public class NfcEventApplicationService {
                   .orElseThrow(() -> new IllegalStateException("No active match"));
 
             if (match.getTurnPhase() == TurnPhase.PLAYER && tag.getTagType() == TagTypeEnum.ZOMBIE_CARD) {
-                  log.info("SKIPPING ZOMBIE CARD FOR NON-PLAYER TURN");
-                  return;
+                  log.warn("SKIPPING ZOMBIE CARD FOR NON-PLAYER TURN");
+                  throw new IllegalArgumentException("Zombie card cannot be scanned during PLAYER phase");
             } else if (match.getTurnPhase() == TurnPhase.ZOMBIE && tag.getTagType() == TagTypeEnum.PLAYER) {
-                  log.info("SKIPPING PLAYER CARD FOR PLAYER TURN");
-                  return;
+                  log.warn("SKIPPING PLAYER CARD FOR PLAYER TURN");
+                  throw new IllegalArgumentException("Player card cannot be scanned during ZOMBIE phase");
             }
 
             if (match.getTurnPhase() == TurnPhase.ZOMBIE) {
@@ -62,7 +62,8 @@ public class NfcEventApplicationService {
 
                         ZombieRespawnPayloadDomain payload = zombieEvent == null ? null : new ZombieRespawnPayloadDomain(
                               zombieEvent.getDangerLevel(), zombieEvent.getSpawnPointType(), zombieEvent.getAmount(),
-                              zombieEvent.getExecutionOrder(), zombieEvent.getType(), z.getKey(), z.getName());
+                              zombieEvent.getExecutionOrder(), zombieEvent.getType(), z.getKey(), z.getName(),
+                              match.getTurnPhase());
 
                         OffsetDateTime now = OffsetDateTime.now();
 
@@ -89,6 +90,7 @@ public class NfcEventApplicationService {
                                     }
                               }
                               matchJpaRepository.save(match);
+                              return payload;
                         }
                   }
 
@@ -98,7 +100,7 @@ public class NfcEventApplicationService {
 
                   switch (tagType) {
                         case ITEMS_CARD -> {
-                              return;
+                              log.info("ITEM CARD SCANNED: {}", tag.getTagUid());
                         }
                         case MISSION_OBJECTIVE -> actor.setLevel(actor.getLevel() + 5);
                         case ZOMBIE -> {
@@ -110,6 +112,7 @@ public class NfcEventApplicationService {
 
                   matchPlayerJpaRepository.save(actor);
             }
+            return null;
       }
 
       private static MatchPlayerEntity getMatchPlayerEntity(MatchEntity match) {

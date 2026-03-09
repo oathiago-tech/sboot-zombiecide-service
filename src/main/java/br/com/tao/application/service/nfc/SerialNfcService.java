@@ -1,5 +1,7 @@
 package br.com.tao.application.service.nfc;
 
+import br.com.tao.application.service.enumeration.SpawnPointTypeEnum;
+import br.com.tao.application.service.enumeration.TurnPhase;
 import br.com.tao.utils.SerialNfcProperties;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
@@ -131,7 +133,30 @@ public class SerialNfcService {
                   log.info("TAG NFC RECEIVED: {}", tagId);
 
                   try {
-                        nfcEventApplicationService.applyNfcEvent(tagId);
+                        var payload = nfcEventApplicationService.applyNfcEvent(tagId);
+
+                        String message = "";
+
+                        if (payload != null) {
+                              if (payload.turnPhase() == TurnPhase.ZOMBIE) {
+                                    message = payload.spawnPointType() != SpawnPointTypeEnum.EXTRA_ZOMBIE_TURN  ?
+                                          String.format(
+                                          "SPAWN|TYPE=%s|AMOUNT=%d\n",
+                                          payload.type(),
+                                          payload.amount()
+                                    ) : payload.type().name() + " GET AN EXTRA TURN!" ;
+                              } else {
+                                    message = "CREATE MESSAGE FOR PLAYER TURN!";
+                              }
+                        }
+
+
+
+                              serialPort.writeBytes(
+                                    message.getBytes(StandardCharsets.UTF_8),
+                                    message.length()
+                              );
+
                   } catch (Exception e) {
                         log.error("ERROR WHILE PROCESSING TAG NFC {}.", tagId, e);
                   }

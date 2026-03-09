@@ -1,0 +1,178 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_PN532.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// PN532 via I2C
+Adafruit_PN532 nfc(21, 22);
+
+void showTapScreen() {
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.println("ZOMBICIDE");
+  display.display();
+}
+
+void setup() {
+
+  Serial.begin(115200);
+
+  Wire.begin(21,22);
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("OLED ERROR");
+    while(true);
+  }
+
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+
+  display.setCursor(0,0);
+  display.println("INITIALIZING...");
+  display.display();
+
+  nfc.begin();
+
+  uint32_t versiondata = nfc.getFirmwareVersion();
+
+  if (!versiondata) {
+
+    Serial.println("PN532 nao encontrado");
+
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.println("PN532 NAO");
+    display.println("ENCONTRADO");
+    display.display();
+
+    while (1);
+  }
+
+  nfc.SAMConfig();
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.println("NFC READY");
+  display.display();
+
+  delay(1500);
+
+  showTapScreen();
+}
+
+void loop() {
+
+  uint8_t success;
+  uint8_t uid[7];
+  uint8_t uidLength;
+
+  success = nfc.readPassiveTargetID(
+      PN532_MIFARE_ISO14443A,
+      uid,
+      &uidLength
+  );
+
+  if (success) {
+
+    String tagID = "";
+
+    for (uint8_t i=0; i < uidLength; i++) {
+
+      char buffer[3];
+      sprintf(buffer,"%02X",uid[i]);
+      tagID += buffer;
+    }
+
+    tagID.toUpperCase();
+
+    // envia para o Java
+    Serial.println(tagID);
+
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.println("TAG READ:");
+    display.setCursor(0,20);
+    display.println(tagID);
+    display.display();
+
+    // aguarda resposta do backend
+    String response = waitSerialResponse();
+
+    if (response.length() > 0) {
+      showEvent(response);
+    }
+
+    delay(3000);
+
+    // volta para tela inicial
+    showTapScreen();
+  }
+}
+
+String waitSerialResponse() {
+
+  unsigned long timeout = millis() + 4000;
+
+  while (millis() < timeout) {
+
+    if (Serial.available()) {
+      String msg = Serial.readStringUntil('\n');
+      msg.trim();
+      return msg;
+    }
+  }
+
+  return "";
+}
+
+void showEvent(String msg) {
+
+  display.clearDisplay();
+  display.setCursor(0,0);
+
+  if (msg.startsWith("SPAWN")) {
+
+    String type = extractValue(msg, "TYPE");
+    String amount = extractValue(msg, "AMOUNT");
+
+    display.println("SPAWN!!!");
+
+    display.setCursor(0,20);
+    display.print(type);
+
+    display.setCursor(0,40);
+    display.print("QTD: ");
+    display.print(amount);
+
+  } else {
+
+    display.println("EVENT:");
+    display.setCursor(0,20);
+    display.println(msg);
+  }
+
+  display.display();
+}
+
+String extractValue(String msg, String key) {
+
+  int start = msg.indexOf(key + "=");
+
+  if (start == -1) return "";
+
+  start += key.length() + 1;
+
+  int end = msg.indexOf("|", start);
+
+  if (end == -1) {
+    end = msg.length();
+  }
+
+  return msg.substring(start, end);
+}
