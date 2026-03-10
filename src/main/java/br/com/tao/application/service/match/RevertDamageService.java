@@ -1,10 +1,14 @@
 package br.com.tao.application.service.match;
 
+import br.com.tao.adapter.in.rest.match.dto.RevertDamageRequestDTO;
+import br.com.tao.adapter.out.persistence.match.MatchRepositoryAdapter;
 import br.com.tao.adapter.out.persistence.match.entity.MatchEntity;
 import br.com.tao.adapter.out.persistence.match.entity.MatchPlayerEntity;
 import br.com.tao.adapter.out.persistence.match.repository.MatchJpaRepository;
+import br.com.tao.adapter.out.persistence.match.repository.MatchPlayerJpaRepository;
 import br.com.tao.adapter.out.persistence.matchevents.entity.MatchEventEntity;
 import br.com.tao.adapter.out.persistence.matchevents.repository.MatchEventJpaRepository;
+import br.com.tao.application.service.enumeration.CharacterEnum;
 import br.com.tao.application.service.enumeration.EventTypeEnum;
 import br.com.tao.domain.match.model.Match;
 import br.com.tao.domain.match.model.MatchPlayer;
@@ -25,58 +29,56 @@ public class RevertDamageService implements RevertDamageUseCase {
       private final MatchJpaRepository matchJpaRepository;
       private final MatchEventJpaRepository matchEventJpaRepository;
       private final ObjectMapper objectMapper;
+      private final MatchPlayerJpaRepository matchPlayerJpaRepository;
 
       private record DamagePayload(String matchPlayerId, int amount, int previousLife, int newLife) {
       }
 
       @Override
       @Transactional
-      public Match revert(String damageEventId) {
-            UUID eventId;
-            try {
-                  eventId = UUID.fromString(damageEventId);
-            } catch (IllegalArgumentException e) {
-                  throw new IllegalArgumentException("Invalid damageEventId (UUID): " + damageEventId, e);
+      public Match revertDamage(UUID matchId, RevertDamageRequestDTO dto) {
+            if (matchId == null) {
+                  throw new IllegalArgumentException("matchId is required");
+            }
+            if (dto == null) {
+                  throw new IllegalArgumentException("body is required");
             }
 
-            MatchEventEntity damageEvent = matchEventJpaRepository.findById(eventId)
-                  .orElseThrow(() -> new IllegalArgumentException("Damage event not found: " + damageEventId));
+            MatchEntity match = matchJpaRepository.findById(matchId)
+                  .orElseThrow(() -> new IllegalArgumentException("Match not found: " + matchId));
 
-            if (damageEvent.getEventType() != EventTypeEnum.DAMAGE_ASSIGNED) {
-                  throw new IllegalArgumentException("Event is not DAMAGE_ASSIGNED: " + damageEventId);
+            if (match.getPlayers() == null || match.getPlayers().isEmpty()) {
+                  throw new IllegalStateException("Match has no players");
             }
 
-            DamagePayload payload;
-            try {
-                  payload = objectMapper.treeToValue(damageEvent.getPayload(), DamagePayload.class);
-            } catch (Exception e) {
-                  throw new IllegalStateException("Failed to parse damage payload for event: " + damageEventId, e);
+            MatchPlayerEntity target;
+
+            if (dto.characterCode() != null && !dto.characterCode().isBlank()) {
+                  CharacterEnum character = CharacterEnum.getCharacter(dto.characterCode());
+
+                  target = match.getPlayers().stream()
+                        .filter(p -> p.getCharacter() == character)
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                              "Player not found in match for characterCode=" + dto.characterCode()
+                        ));
+            } else if (dto.playerId() != null && !dto.playerId().isBlank()) {
+                  UUID playerId = UUID.fromString(dto.playerId());
+
+                  target = match.getPlayers().stream()
+                        .filter(p -> p.getId() != null && p.getId().equals(playerId))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                              "Player not found in match for playerId=" + dto.playerId()
+                        ));
+            } else {
+                  throw new IllegalArgumentException("playerId or characterCode is required");
             }
 
-            // Lock na partida ativa (ou, alternativamente, buscar por matchId do evento)
-            MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate()
-                  .orElseThrow(() -> new IllegalStateException("No active match"));
+            target.setLife(target.getLife() + 1);
+            matchPlayerJpaRepository.save(target);
 
-            UUID playerId = UUID.fromString(payload.matchPlayerId());
-
-            MatchPlayerEntity target = match.getPlayers().stream()
-                  .filter(p -> p.getId() != null && p.getId().equals(playerId)).findFirst().orElseThrow(
-                        () -> new IllegalArgumentException(
-                              "Player not found in active match: " + payload.matchPlayerId()));
-
-            target.setLife(payload.previousLife());
-
-            MatchEntity savedMatch = matchJpaRepository.save(match);
-
-            MatchEventEntity revertEvent = new MatchEventEntity();
-            revertEvent.setMatch(savedMatch);
-            revertEvent.setActor(target);
-            revertEvent.setEventType(EventTypeEnum.DAMAGE_REVERTED);
-            revertEvent.setPayload(damageEvent.getPayload());
-            revertEvent.setCreatedAt(OffsetDateTime.now());
-            matchEventJpaRepository.save(revertEvent);
-
-            return toDomain(savedMatch);
+            return MatchRepositoryAdapter.toDomain(match);
       }
 
       private static Match toDomain(MatchEntity entity) {

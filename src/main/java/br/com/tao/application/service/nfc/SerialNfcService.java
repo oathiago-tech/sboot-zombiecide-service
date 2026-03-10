@@ -1,5 +1,6 @@
 package br.com.tao.application.service.nfc;
 
+import br.com.tao.application.service.enumeration.EventTypeEnum;
 import br.com.tao.application.service.enumeration.SpawnPointTypeEnum;
 import br.com.tao.application.service.enumeration.TurnPhase;
 import br.com.tao.utils.SerialNfcProperties;
@@ -82,8 +83,7 @@ public class SerialNfcService {
             try {
                   serialPort.removeDataListener();
             } catch (Exception e) {
-                  log.debug("FAIL TO REMOVE DATA LISTENER FROM NFC SERIAL.",
-                        e);
+                  log.debug("FAIL TO REMOVE DATA LISTENER FROM NFC SERIAL.", e);
             }
 
             try {
@@ -134,31 +134,34 @@ public class SerialNfcService {
 
                   try {
                         var payload = nfcEventApplicationService.applyNfcEvent(tagId);
-
                         String message = "";
-
                         if (payload != null) {
                               if (payload.turnPhase() == TurnPhase.ZOMBIE) {
-                                    message = payload.spawnPointType() != SpawnPointTypeEnum.EXTRA_ZOMBIE_TURN  ?
-                                          String.format(
-                                          "SPAWN|TYPE=%s|AMOUNT=%d\n",
-                                          payload.type(),
-                                          payload.amount()
-                                    ) : payload.type().name() + " GET AN         EXTRA TURN" ;
+
+                                    if (payload.eventType() == EventTypeEnum.DAMAGE_ASSIGNED) {
+                                          message = payload.characterKey() + " DAMAGED";
+                                    } else {
+                                          message = payload.spawnPointType() != SpawnPointTypeEnum.EXTRA_ZOMBIE_TURN ? String.format(
+                                                "SPAWN|TYPE=%s|AMOUNT=%d\n", payload.type(),
+                                                payload.amount()) : payload.type()
+                                                .name() + " GET AN         EXTRA TURN";
+                                    }
                               } else {
-                                    message = "CREATE MESSAGE FOR PLAYER TURN!";
+                                    if (payload.eventType() == EventTypeEnum.DAMAGE_REVERTED) {
+                                          message = payload.characterKey() + " DAMAGED REVERTED";
+                                    } else if (payload.eventType() == EventTypeEnum.ZOMBIE_KILL) {
+                                          message = payload.characterKey() + " KILL A " + payload.type();
+                                    } else {
+                                          message = "CREATE MESSAGE FOR PLAYER TURN!";
+                                    }
                               }
                         }
-
-
-
-                              serialPort.writeBytes(
-                                    message.getBytes(StandardCharsets.UTF_8),
-                                    message.length()
-                              );
+                        serialPort.writeBytes(message.getBytes(StandardCharsets.UTF_8), message.length());
 
                   } catch (Exception e) {
                         log.error("ERROR WHILE PROCESSING TAG NFC {}.", tagId, e);
+                        String message = e.getMessage() != null ? e.getMessage() : "ERROR WHILE PROCESSING TAG NFC.";
+                        serialPort.writeBytes(message.getBytes(StandardCharsets.UTF_8), message.length());
                   }
             }
       }
