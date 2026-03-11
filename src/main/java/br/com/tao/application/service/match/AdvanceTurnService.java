@@ -2,13 +2,19 @@ package br.com.tao.application.service.match;
 
 import br.com.tao.adapter.out.persistence.match.entity.MatchEntity;
 import br.com.tao.adapter.out.persistence.match.repository.MatchJpaRepository;
+import br.com.tao.adapter.out.persistence.matchevents.entity.MatchEventEntity;
+import br.com.tao.adapter.out.persistence.matchevents.repository.MatchEventJpaRepository;
+import br.com.tao.application.service.enumeration.EventTypeEnum;
 import br.com.tao.application.service.enumeration.TurnPhase;
+import br.com.tao.application.service.nfc.domain.EventResponseDomain;
 import br.com.tao.domain.match.model.Match;
 import br.com.tao.domain.match.model.MatchPlayer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.Collections;
 
 @Service
@@ -16,6 +22,8 @@ import java.util.Collections;
 public class AdvanceTurnService {
 
       private final MatchJpaRepository matchJpaRepository;
+      private final MatchEventJpaRepository matchEventJpaRepository;
+      private final ObjectMapper objectMapper;
 
       @Transactional
       public Match nextTurn() {
@@ -37,6 +45,15 @@ public class AdvanceTurnService {
 
             String currentPlayerId = saved.getTurnPhase() != TurnPhase.PLAYER ? null : (saved.getCurrentTurnIndex() == null ? null : (saved.getPlayers() == null || saved.getPlayers()
                   .isEmpty() ? null : saved.getPlayers().get(saved.getCurrentTurnIndex()).getId().toString()));
+
+            var payload = new EventResponseDomain(null, null, null, null, null, null, null,
+                  saved.getTurnPhase(), OffsetDateTime.now(), null,
+                  EventTypeEnum.TURN_STARTED);
+
+            matchEventJpaRepository.save(
+                  MatchEventEntity.builder().eventType(EventTypeEnum.TURN_STARTED)
+                        .actor(null).tagUid(null)
+                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
 
             return returnMatch(saved, currentPlayerId);
       }

@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -67,10 +69,11 @@ public class NfcEventApplicationService {
 
                   if (tag.getZombie() == null) {
                         if (tag.getPlayerCharacter() != null) {
-                              MatchPlayerEntity target = match.getPlayers().stream()
-                                    .filter(p -> p.getCharacter() == tag.getPlayerCharacter()).findAny().orElseThrow(
-                                          () -> new IllegalArgumentException(
-                                                "Player not found in active match for character=" + tag.getPlayerCharacter()));
+                              MatchPlayerEntity target = getPlayersInStableOrder(match).stream()
+                                    .filter(p -> p.getCharacter() == tag.getPlayerCharacter())
+                                    .findFirst()
+                                    .orElseThrow(() -> new IllegalArgumentException(
+                                          "Player not found in active match for character=" + tag.getPlayerCharacter()));
 
                               target.setLife(target.getLife() - 1);
                               matchPlayerJpaRepository.save(target);
@@ -151,10 +154,11 @@ public class NfcEventApplicationService {
                                     .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
                   }
                   case PLAYER -> {
-                        MatchPlayerEntity target = match.getPlayers().stream()
-                              .filter(p -> p.getCharacter() == tag.getPlayerCharacter()).findAny().orElseThrow(
-                                    () -> new IllegalArgumentException(
-                                          "Player not found in active match for character=" + tag.getPlayerCharacter()));
+                        MatchPlayerEntity target = getPlayersInStableOrder(match).stream()
+                              .filter(p -> p.getCharacter() == tag.getPlayerCharacter())
+                              .findFirst()
+                              .orElseThrow(() -> new IllegalArgumentException(
+                                    "Player not found in active match for character=" + tag.getPlayerCharacter()));
 
                         target.setLife(target.getLife() + 1);
                         matchPlayerJpaRepository.save(target);
@@ -192,15 +196,28 @@ public class NfcEventApplicationService {
 
       private static MatchPlayerEntity getMatchPlayerEntity(MatchEntity match) {
             int idx = match.getCurrentTurnIndex() == null ? 0 : match.getCurrentTurnIndex();
+            List<MatchPlayerEntity> orderedPlayers = getPlayersInStableOrder(match);
+
+            if (idx < 0 || idx >= orderedPlayers.size()) {
+                  throw new IllegalStateException(
+                        "Invalid currentTurnIndex=" + idx + " for players=" + orderedPlayers.size());
+            }
+
+            return orderedPlayers.get(idx);
+      }
+
+      private static List<MatchPlayerEntity> getPlayersInStableOrder(MatchEntity match) {
             if (match.getPlayers() == null || match.getPlayers().isEmpty()) {
                   throw new IllegalStateException("Active match has no players");
             }
-            if (idx < 0 || idx >= match.getPlayers().size()) {
-                  throw new IllegalStateException(
-                        "Invalid currentTurnIndex=" + idx + " for players=" + match.getPlayers().size());
-            }
 
-            return match.getPlayers().get(idx);
+            // Garante ordem determinística para que o currentTurnIndex aponte sempre para o mesmo jogador,
+            // independentemente de como o JPA retornar a coleção após saves/flush.
+            return match.getPlayers().stream()
+                  .sorted(Comparator
+                        .comparing((MatchPlayerEntity p) -> p.getCharacter() == null ? "" : p.getCharacter().name())
+                        .thenComparing(p -> p.getId() == null ? "" : p.getId().toString()))
+                  .toList();
       }
 
       public EventResponseDomain getLastEvent() {

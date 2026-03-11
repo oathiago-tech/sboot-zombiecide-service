@@ -11,27 +11,29 @@ import java.util.UUID;
 public interface MatchJpaRepository extends JpaRepository<MatchEntity, UUID> {
       Optional<MatchEntity> findByActive(boolean active);
 
-      @Modifying (clearAutomatically = true, flushAutomatically = true)
-      @Query ("update MatchEntity m set m.active = false where m.active = true")
+      @Modifying(clearAutomatically = true, flushAutomatically = true)
+      @Query("update MatchEntity m set m.active = false where m.active = true")
       int deactivateAllActive();
 
-      @Query ("""
+      @Query("""
             select m
             from MatchEntity m
             left join fetch m.players p
             where m.id = :matchId
+            order by p.id
             """)
       Optional<MatchEntity> findByIdWithPlayers(UUID matchId);
 
-      @Query ("""
+      @Query("""
             select m
             from MatchEntity m
             left join fetch m.players p
             where m.active = true
+            order by p.id
             """)
       Optional<MatchEntity> findActiveWithPlayersForUpdate();
 
-      @Query ("""
+      @Query("""
             select coalesce(max(p.level), 0)
             from MatchPlayerEntity p
             where p.match.id = :matchId
