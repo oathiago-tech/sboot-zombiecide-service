@@ -138,45 +138,73 @@ public class NfcEventApplicationService {
 
             switch (tagType) {
                   case ITEMS_CARD -> {
-                        log.info("ITEM CARD SCANNED: {}", tag.getTagUid());
+                        payload = itemFound(match, tag, dangerLevel, actor);
                   }
                   case MISSION_OBJECTIVE -> actor.setLevel(actor.getLevel() + 5);
                   case ZOMBIE -> {
-                        killZombies(match, tag, actor);
-                        matchJpaRepository.save(match);
-                        payload = new EventResponseDomain(dangerLevel, null, 1, 0, tag.getZombieType(), null, null,
-                              TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(),
-                              EventTypeEnum.ZOMBIE_KILL);
-
-                        matchEventJpaRepository.save(
-                              MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_KILL)
-                                    .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                                    .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+                        payload = zombieKill(match, tag, dangerLevel, actor);
                   }
                   case PLAYER -> {
-                        MatchPlayerEntity target = getPlayersInStableOrder(match).stream()
-                              .filter(p -> p.getCharacter() == tag.getPlayerCharacter())
-                              .findFirst()
-                              .orElseThrow(() -> new IllegalArgumentException(
-                                    "Player not found in active match for character=" + tag.getPlayerCharacter()));
-
-                        target.setLife(target.getLife() + 1);
-                        matchPlayerJpaRepository.save(target);
-
-                        payload = new EventResponseDomain(null, null, null, null, null, null, null,
-                              TurnPhase.PLAYER, OffsetDateTime.now(), tag.getPlayerCharacter().name(),
-                              EventTypeEnum.DAMAGE_REVERTED);
-
-                        matchEventJpaRepository.save(
-                              MatchEventEntity.builder().eventType(EventTypeEnum.DAMAGE_REVERTED)
-                                    .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                                    .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+                        payload = revertDamage(match, tag);
                   }
                   default -> throw new IllegalArgumentException("Unsupported tagType: " + tagType);
             }
 
             matchPlayerJpaRepository.save(actor);
 
+            return payload;
+      }
+
+      private EventResponseDomain zombieKill(MatchEntity match, TagEntity tag, DangerLevelEnum dangerLevel, MatchPlayerEntity actor) {
+            EventResponseDomain payload;
+            killZombies(match, tag, actor);
+            matchJpaRepository.save(match);
+            payload = new EventResponseDomain(dangerLevel, null, 1, 0, tag.getZombieType(), null, null,
+                  TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(),
+                  EventTypeEnum.ZOMBIE_KILL);
+
+            matchEventJpaRepository.save(
+                  MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_KILL)
+                        .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
+                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+            return payload;
+      }
+
+      private EventResponseDomain itemFound(MatchEntity match, TagEntity tag, DangerLevelEnum dangerLevel,
+                                    MatchPlayerEntity actor) {
+            EventResponseDomain payload;
+            killZombies(match, tag, actor);
+            matchJpaRepository.save(match);
+            payload = new EventResponseDomain(dangerLevel, null, 1, 0, tag.getZombieType(), null, tag.getItem().getName(),
+                  TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(),
+                  EventTypeEnum.ITEM_SCANNED);
+
+            matchEventJpaRepository.save(
+                  MatchEventEntity.builder().eventType(EventTypeEnum.ITEM_SCANNED)
+                        .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
+                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+            return payload;
+      }
+
+      private EventResponseDomain revertDamage(MatchEntity match, TagEntity tag) {
+            EventResponseDomain payload;
+            MatchPlayerEntity target = getPlayersInStableOrder(match).stream()
+                  .filter(p -> p.getCharacter() == tag.getPlayerCharacter())
+                  .findFirst()
+                  .orElseThrow(() -> new IllegalArgumentException(
+                        "Player not found in active match for character=" + tag.getPlayerCharacter()));
+
+            target.setLife(target.getLife() + 1);
+            matchPlayerJpaRepository.save(target);
+
+            payload = new EventResponseDomain(null, null, null, null, null, null, null,
+                  TurnPhase.PLAYER, OffsetDateTime.now(), tag.getPlayerCharacter().name(),
+                  EventTypeEnum.DAMAGE_REVERTED);
+
+            matchEventJpaRepository.save(
+                  MatchEventEntity.builder().eventType(EventTypeEnum.DAMAGE_REVERTED)
+                        .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
+                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
             return payload;
       }
 

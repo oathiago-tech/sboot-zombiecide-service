@@ -116,7 +116,7 @@ void loop() {
       showEvent(response);
     }
 
-    delay(3000);
+    delay(500);
 
     // volta para tela inicial
     showTapScreen();
@@ -125,7 +125,7 @@ void loop() {
 
 String waitSerialResponse() {
 
-  unsigned long timeout = millis() + 4000;
+  unsigned long timeout = millis() + 500;
 
   while (millis() < timeout) {
 

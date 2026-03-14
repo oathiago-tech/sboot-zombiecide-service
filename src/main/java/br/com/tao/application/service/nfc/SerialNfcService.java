@@ -137,7 +137,6 @@ public class SerialNfcService {
                         String message = "";
                         if (payload != null) {
                               if (payload.turnPhase() == TurnPhase.ZOMBIE) {
-
                                     if (payload.eventType() == EventTypeEnum.DAMAGE_ASSIGNED) {
                                           message = payload.characterKey() + " DAMAGED";
                                     } else {
@@ -151,6 +150,8 @@ public class SerialNfcService {
                                           message = payload.characterKey() + " DAMAGED REVERTED";
                                     } else if (payload.eventType() == EventTypeEnum.ZOMBIE_KILL) {
                                           message = payload.characterKey() + " KILL A " + payload.type();
+                                    } else if (payload.eventType() == EventTypeEnum.ITEM_SCANNED) {
+                                          message = payload.characterKey() + " FOUND A ITEM" ;
                                     } else {
                                           message = "CREATE MESSAGE FOR PLAYER TURN!";
                                     }
