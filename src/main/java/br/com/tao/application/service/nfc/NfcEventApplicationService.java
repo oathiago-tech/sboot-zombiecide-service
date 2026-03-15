@@ -9,6 +9,7 @@ import br.com.tao.adapter.out.persistence.matchevents.repository.MatchEventJpaRe
 import br.com.tao.adapter.out.persistence.tag.entity.TagEntity;
 import br.com.tao.adapter.out.persistence.tag.repository.TagJpaRepository;
 import br.com.tao.application.service.enumeration.*;
+import br.com.tao.application.service.match.AdvanceTurnService;
 import br.com.tao.application.service.nfc.domain.EventResponseDomain;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,11 +32,24 @@ public class NfcEventApplicationService {
       private final MatchEventJpaRepository matchEventJpaRepository;
       private final ObjectMapper objectMapper;
       private final MatchPlayerJpaRepository matchPlayerJpaRepository;
-      ;
+      private final AdvanceTurnService advanceTurnService;
 
       @Transactional
       public EventResponseDomain applyNfcEvent(String tagUid) {
             makeValidations result = getMakeValidations(tagUid);
+            if (tagUid.equals("BUTTON_NEXT_TURN")) {
+                  advanceTurnService.nextTurn();
+                  var payload = new EventResponseDomain(null, null, null, null, null, null, null,
+                        result.match().getTurnPhase(), OffsetDateTime.now(), "",
+                        EventTypeEnum.TURN_ENDED);
+
+                  matchEventJpaRepository.save(
+                        MatchEventEntity.builder().eventType(EventTypeEnum.TURN_ENDED)
+                              .actor(getMatchPlayerEntity(result.match)).tagUid(tagUid)
+                              .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(result.match).build());
+                  log.info("TURN ENDED");
+                  return payload;
+            }
             var maxLevel = matchJpaRepository.findHighestPlayerLevel(result.match.getId());
             final DangerLevelEnum dangerLevel = maxLevel < 7 ? DangerLevelEnum.BLUE : maxLevel < 19 ?
                   DangerLevelEnum.YELLOW : maxLevel < 43 ? DangerLevelEnum.ORANGE : DangerLevelEnum.RED;
@@ -51,8 +65,9 @@ public class NfcEventApplicationService {
                   throw new IllegalArgumentException("tagUid is required");
             }
 
-            TagEntity tag = tagJpaRepository.findByTagUid(tagUid).filter(t -> Boolean.TRUE.equals(t.getActive()))
-                  .orElseThrow(() -> new IllegalArgumentException("Tag not found or inactive: " + tagUid));
+
+            TagEntity tag = !tagUid.equals("BUTTON_NEXT_TURN") ? tagJpaRepository.findByTagUid(tagUid).filter(t -> Boolean.TRUE.equals(t.getActive()))
+                  .orElseThrow(() -> new IllegalArgumentException("Tag not found or inactive: " + tagUid)) : null;
 
             MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate()
                   .orElseThrow(() -> new IllegalStateException("No active match"));

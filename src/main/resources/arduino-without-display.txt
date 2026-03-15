@@ -1,0 +1,94 @@
+#include <Wire.h>
+#include <Adafruit_PN532.h>
+
+#define BUTTON_NEXT_TURN 18
+
+// PN532 via I2C
+Adafruit_PN532 nfc(21, 22);
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(BUTTON_NEXT_TURN, INPUT);
+  Wire.begin(21,22);
+  nfc.begin();
+
+  uint32_t versiondata = nfc.getFirmwareVersion();
+
+  if (!versiondata) {
+    Serial.println("PN532 NOT FOUND");
+    while (1);
+  }
+  nfc.SAMConfig();
+  delay(1500);
+}
+
+void loop() {
+  int state = digitalRead(BUTTON_NEXT_TURN);
+  uint8_t success;
+  uint8_t uid[7];
+  uint8_t uidLength;
+
+  if(state == 1){
+    Serial.println("BUTTON_NEXT_TURN");
+    delay(500);
+  }
+
+  success = nfc.readPassiveTargetID(
+      PN532_MIFARE_ISO14443A,
+      uid,
+      &uidLength,
+      50
+  );
+
+  if (success) {
+    String tagID = "";
+    for (uint8_t i=0; i < uidLength; i++) {
+      char buffer[3];
+      sprintf(buffer,"%02X",uid[i]);
+      tagID += buffer;
+    }
+    tagID.toUpperCase();
+    // envia para o Java
+    Serial.println(tagID);
+    String response = waitSerialResponse();
+    if (response.length() > 0) {
+      showEvent(response);
+    }
+    delay(500);
+  }
+}
+
+String waitSerialResponse() {
+  unsigned long timeout = millis() + 500;
+  while (millis() < timeout) {
+
+    if (Serial.available()) {
+      String msg = Serial.readStringUntil('\n');
+      msg.trim();
+      return msg;
+    }
+  }
+  return "";
+}
+
+void showEvent(String msg) {
+  if (msg.startsWith("SPAWN")) {
+
+    String type = extractValue(msg, "TYPE");
+    String amount = extractValue(msg, "AMOUNT");
+    Serial.println(type);
+  } else {
+    Serial.println("TESTE");
+  }
+}
+
+String extractValue(String msg, String key) {
+  int start = msg.indexOf(key + "=");
+  if (start == -1) return "";
+  start += key.length() + 1;
+  int end = msg.indexOf("|", start);
+  if (end == -1) {
+    end = msg.length();
+  }
+  return msg.substring(start, end);
+}
