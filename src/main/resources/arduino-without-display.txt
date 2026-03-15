@@ -77,8 +77,6 @@ void showEvent(String msg) {
     String type = extractValue(msg, "TYPE");
     String amount = extractValue(msg, "AMOUNT");
     Serial.println(type);
-  } else {
-    Serial.println("TESTE");
   }
 }
 

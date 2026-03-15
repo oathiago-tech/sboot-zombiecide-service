@@ -38,17 +38,9 @@ public class NfcEventApplicationService {
       public EventResponseDomain applyNfcEvent(String tagUid) {
             makeValidations result = getMakeValidations(tagUid);
             if (tagUid.equals("BUTTON_NEXT_TURN")) {
-                  advanceTurnService.nextTurn();
-                  var payload = new EventResponseDomain(null, null, null, null, null, null, null,
-                        result.match().getTurnPhase(), OffsetDateTime.now(), "",
-                        EventTypeEnum.TURN_ENDED);
-
-                  matchEventJpaRepository.save(
-                        MatchEventEntity.builder().eventType(EventTypeEnum.TURN_ENDED)
-                              .actor(getMatchPlayerEntity(result.match)).tagUid(tagUid)
-                              .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(result.match).build());
-                  log.info("TURN ENDED");
-                  return payload;
+                  return advanceToNextTurn(tagUid, result);
+            } else if (tagUid.equals("ROLLBACK_ACTION")) {
+                  log.info("ROLLBACK ACTION");
             }
             var maxLevel = matchJpaRepository.findHighestPlayerLevel(result.match.getId());
             final DangerLevelEnum dangerLevel = maxLevel < 7 ? DangerLevelEnum.BLUE : maxLevel < 19 ?
@@ -58,6 +50,20 @@ public class NfcEventApplicationService {
             } else {
                   return processPlayerEvent(result.match(), result.tag(), dangerLevel);
             }
+      }
+
+      private EventResponseDomain advanceToNextTurn(String tagUid, makeValidations result) {
+            advanceTurnService.nextTurn();
+            var payload = new EventResponseDomain(null, null, null, null, null, null, null,
+                  result.match().getTurnPhase(), OffsetDateTime.now(), "",
+                  EventTypeEnum.TURN_ENDED);
+
+            matchEventJpaRepository.save(
+                  MatchEventEntity.builder().eventType(EventTypeEnum.TURN_ENDED)
+                        .actor(getMatchPlayerEntity(result.match)).tagUid(tagUid)
+                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(result.match).build());
+            log.info("TURN ENDED");
+            return payload;
       }
 
       private makeValidations getMakeValidations(String tagUid) {
