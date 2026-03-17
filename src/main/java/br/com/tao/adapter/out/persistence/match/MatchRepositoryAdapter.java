@@ -56,6 +56,8 @@ public class MatchRepositoryAdapter implements MatchRepository {
             entity.setCampaignName(match.getCampaignName());
             entity.setActive(Boolean.FALSE);
             entity.setCreatedAt(OffsetDateTime.now());
+            entity.setAutomaticSpawn(match.getAutomaticSpawn());
+            entity.setSpawnsAmount(match.getSpawnsAmount());
 
             if (match.getPlayers() != null) {
                   for(MatchPlayer p : match.getPlayers()) {

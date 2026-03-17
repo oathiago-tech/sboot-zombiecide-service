@@ -58,4 +58,10 @@ public class MatchEntity {
 
       @OneToMany (mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
       private List<MatchPlayerEntity> players = new ArrayList<>();
+
+      @Column (name = "automatic_spawn")
+      private Boolean automaticSpawn;
+
+      @Column (name = "spawns_amount")
+      private Integer spawnsAmount;
 }

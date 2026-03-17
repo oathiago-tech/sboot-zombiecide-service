@@ -62,7 +62,6 @@ public class NfcEventApplicationService {
                   MatchEventEntity.builder().eventType(EventTypeEnum.TURN_ENDED)
                         .actor(getMatchPlayerEntity(result.match)).tagUid(tagUid)
                         .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(result.match).build());
-            log.info("TURN ENDED");
             return payload;
       }
 

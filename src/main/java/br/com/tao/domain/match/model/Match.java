@@ -26,4 +26,6 @@ public class Match {
       private Integer activeRunners;
       private Integer activeFaties;
       private Integer activeAbomination;
+      private Boolean automaticSpawn;
+      private Integer spawnsAmount;
 }

@@ -11,4 +11,6 @@ public class CreateMatchRequestDTO {
       private CreateMatchCampaignRequestDTO campaign;
       private String difficult;
       private List<CreateMatchPlayerRequestDTO> players;
+      private Boolean automaticSpawn;
+      private Integer spawnsAmount;
 }
