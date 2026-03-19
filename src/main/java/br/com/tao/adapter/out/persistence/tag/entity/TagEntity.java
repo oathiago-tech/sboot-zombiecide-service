@@ -1,7 +1,5 @@
 package br.com.tao.adapter.out.persistence.tag.entity;
 
-import br.com.tao.adapter.out.persistence.item.entity.ItemEntity;
-import br.com.tao.adapter.out.persistence.zombie.entity.ZombieEntity;
 import br.com.tao.application.service.enumeration.CharacterEnum;
 import br.com.tao.application.service.enumeration.TagTypeEnum;
 import br.com.tao.application.service.enumeration.ZombieTypeEnum;
@@ -28,22 +26,46 @@ public class TagEntity {
       @Column (name = "tag_type", nullable = false, length = 50)
       private TagTypeEnum tagType;
 
-      @ManyToOne (fetch = FetchType.LAZY)
-      @JoinColumn (name = "item_id")
-      private ItemEntity item;
-
-      @ManyToOne (fetch = FetchType.LAZY)
-      @JoinColumn (name = "zombie_id")
-      private ZombieEntity zombie;
-
       @Column (name = "active", nullable = false)
       private Boolean active = Boolean.TRUE;
 
-      @Enumerated(EnumType.STRING)
-      @Column(name = "player_character", length = 255)
+      @Enumerated (EnumType.STRING)
+      @Column (name = "player_character", length = 255)
       private CharacterEnum playerCharacter;
 
-      @Enumerated(EnumType.STRING)
-      @Column(name = "zombie_type", length = 255)
+      @Enumerated (EnumType.STRING)
+      @Column (name = "zombie_type", length = 255)
       private ZombieTypeEnum zombieType;
+
+      private String name;
+
+      private Integer life;
+
+      //      BLUE LEVEL
+      @Column (name = "blue_zombie_amount")
+      private Integer blueZombieAmount;
+      @Enumerated (EnumType.STRING)
+      @Column (name = "blue_zombie_type")
+      private ZombieTypeEnum blueZombieType;
+
+      //      YELLOW LEVEL
+      @Column (name = "yellow_zombie_amount")
+      private Integer yellowZombieAmount;
+      @Enumerated(EnumType.STRING)
+      @Column (name = "yellow_zombie_type")
+      private ZombieTypeEnum yellowZombieType;
+
+      //      ORANGE LEVEL
+      @Column (name = "orange_zombie_amount")
+      private Integer orangeZombieAmount;
+      @Enumerated(EnumType.STRING)
+      @Column (name = "orange_zombie_type")
+      private ZombieTypeEnum orangeZombieType;
+
+      //      RED LEVEL
+      @Column (name = "red_zombie_amount")
+      private Integer redZombieAmount;
+      @Enumerated(EnumType.STRING)
+      @Column (name = "red_zombie_type")
+      private ZombieTypeEnum redZombieType;
 }

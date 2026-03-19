@@ -43,8 +43,7 @@ public class NfcEventApplicationService {
                   log.info("ROLLBACK ACTION");
             }
             var maxLevel = matchJpaRepository.findHighestPlayerLevel(result.match.getId());
-            final DangerLevelEnum dangerLevel = maxLevel < 7 ? DangerLevelEnum.BLUE : maxLevel < 19 ?
-                  DangerLevelEnum.YELLOW : maxLevel < 43 ? DangerLevelEnum.ORANGE : DangerLevelEnum.RED;
+            final DangerLevelEnum dangerLevel = maxLevel < 7 ? DangerLevelEnum.BLUE : maxLevel < 19 ? DangerLevelEnum.YELLOW : maxLevel < 43 ? DangerLevelEnum.ORANGE : DangerLevelEnum.RED;
             if (result.match().getTurnPhase() == TurnPhase.ZOMBIE) {
                   return processZombiesEvent(result.match(), result.tag(), dangerLevel);
             } else {
@@ -55,13 +54,11 @@ public class NfcEventApplicationService {
       private EventResponseDomain advanceToNextTurn(String tagUid, makeValidations result) {
             advanceTurnService.nextTurn();
             var payload = new EventResponseDomain(null, null, null, null, null, null, null,
-                  result.match().getTurnPhase(), OffsetDateTime.now(), "",
-                  EventTypeEnum.TURN_ENDED);
+                  result.match().getTurnPhase(), OffsetDateTime.now(), "", EventTypeEnum.TURN_ENDED);
 
-            matchEventJpaRepository.save(
-                  MatchEventEntity.builder().eventType(EventTypeEnum.TURN_ENDED)
-                        .actor(getMatchPlayerEntity(result.match)).tagUid(tagUid)
-                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(result.match).build());
+            matchEventJpaRepository.save(MatchEventEntity.builder().eventType(EventTypeEnum.TURN_ENDED)
+                  .actor(getMatchPlayerEntity(result.match)).tagUid(tagUid).payload(objectMapper.valueToTree(payload))
+                  .createdAt(OffsetDateTime.now()).match(result.match).build());
             return payload;
       }
 
@@ -71,7 +68,8 @@ public class NfcEventApplicationService {
             }
 
 
-            TagEntity tag = !tagUid.equals("BUTTON_NEXT_TURN") ? tagJpaRepository.findByTagUid(tagUid).filter(t -> Boolean.TRUE.equals(t.getActive()))
+            TagEntity tag = !tagUid.equals("BUTTON_NEXT_TURN") ? tagJpaRepository.findByTagUid(tagUid)
+                  .filter(t -> Boolean.TRUE.equals(t.getActive()))
                   .orElseThrow(() -> new IllegalArgumentException("Tag not found or inactive: " + tagUid)) : null;
 
             MatchEntity match = matchJpaRepository.findActiveWithPlayersForUpdate()
@@ -85,70 +83,105 @@ public class NfcEventApplicationService {
       }
 
       private EventResponseDomain processZombiesEvent(MatchEntity match, TagEntity tag, DangerLevelEnum dangerLevel) {
+            EventResponseDomain payload = null;
             if (match.getTurnPhase() == TurnPhase.ZOMBIE) {
+                  if (tag.getTagType().equals(TagTypeEnum.ZOMBIE)) {
+                        validateZombieType(match, tag);
+                        payload = new EventResponseDomain(null, null, null, null, null, null, null, TurnPhase.ZOMBIE,
+                              OffsetDateTime.now(), null, EventTypeEnum.ZOMBIE_SCANNED);
 
-                  if (tag.getZombie() == null) {
-                        if (tag.getPlayerCharacter() != null) {
+                        matchEventJpaRepository.save(MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_SCANNED)
+                              .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
+                              .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match)
+                              .build());
+
+                  } else if (tag.getTagType().equals(TagTypeEnum.ZOMBIE_CARD)) {
+                        ZombieTypeEnum currentZombieType;
+                        Integer currentZombieAmount;
+
+                        switch (dangerLevel) {
+                              case BLUE -> {
+                                    currentZombieType = tag.getBlueZombieType();
+                                    currentZombieAmount = tag.getBlueZombieAmount();
+                              }
+                              case YELLOW -> {
+                                    currentZombieType = tag.getYellowZombieType();
+                                    currentZombieAmount = tag.getYellowZombieAmount();
+                              }
+                              case ORANGE -> {
+                                    currentZombieType = tag.getOrangeZombieType();
+                                    currentZombieAmount = tag.getOrangeZombieAmount();
+                              }
+                              case RED -> {
+                                    currentZombieType = tag.getRedZombieType();
+                                    currentZombieAmount = tag.getRedZombieAmount();
+                              }
+                              default -> throw new IllegalArgumentException("Unsupported danger level: " + dangerLevel);
+                        }
+
+                        if (currentZombieType != null && currentZombieAmount != null) {
+                              switch (currentZombieType) {
+                                    case WALKERS ->
+                                          match.setActiveWalkers(match.getActiveWalkers() + currentZombieAmount);
+                                    case RUNNERS ->
+                                          match.setActiveRunners(match.getActiveRunners() + currentZombieAmount);
+                                    case FATIES -> {
+                                          match.setActiveFaties(match.getActiveFaties() + currentZombieAmount);
+                                          match.setActiveWalkers(match.getActiveWalkers() + (2 * currentZombieAmount));
+                                    }
+                                    case ABOMINATION -> match.setActiveAbomination(
+                                          match.getActiveAbomination() + currentZombieAmount);
+                              }
+                        }
+                        payload = new EventResponseDomain(null, null, null, null, null, null, null, TurnPhase.ZOMBIE,
+                              OffsetDateTime.now(), null, EventTypeEnum.ZOMBIE_CARD_SCANNED);
+
+                        matchEventJpaRepository.save(
+                              MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_CARD_SCANNED)
+                                    .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
+                                    .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now())
+                                    .match(match).build());
+
+                  } else if (tag.getTagType().equals(TagTypeEnum.PLAYER)) {
+                        var player = tag.getPlayerCharacter();
+                        if (player != null) {
                               MatchPlayerEntity target = getPlayersInStableOrder(match).stream()
-                                    .filter(p -> p.getCharacter() == tag.getPlayerCharacter())
-                                    .findFirst()
-                                    .orElseThrow(() -> new IllegalArgumentException(
-                                          "Player not found in active match for character=" + tag.getPlayerCharacter()));
-
+                                    .filter(p -> p.getCharacter() == player).findFirst().orElseThrow(
+                                          () -> new IllegalArgumentException(
+                                                "Player not found in active match for character=" + player));
                               target.setLife(target.getLife() - 1);
                               matchPlayerJpaRepository.save(target);
 
-                              var payload = new EventResponseDomain(null, null, null, null, null, null, null,
-                                    TurnPhase.ZOMBIE, OffsetDateTime.now(), tag.getPlayerCharacter().name(),
+                              payload = new EventResponseDomain(null, null, null, null, null, null, null,
+                                    TurnPhase.ZOMBIE, OffsetDateTime.now(), player.name(),
                                     EventTypeEnum.DAMAGE_ASSIGNED);
 
                               matchEventJpaRepository.save(
                                     MatchEventEntity.builder().eventType(EventTypeEnum.DAMAGE_ASSIGNED)
                                           .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                                          .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
-
-                              return payload;
-                        }
-                  } else {
-                        var zombieEvent = tag.getZombie().getZombieRespawns().stream()
-                              .filter(z -> z.getDangerLevel() == dangerLevel).findFirst().orElse(null);
-
-                        var z = tag.getZombie();
-
-                        EventResponseDomain payload = zombieEvent == null ? null : new EventResponseDomain(
-                              zombieEvent.getDangerLevel(), zombieEvent.getSpawnPointType(), zombieEvent.getAmount(),
-                              zombieEvent.getExecutionOrder(), zombieEvent.getType(), z.getKey(), z.getName(),
-                        TurnPhase.ZOMBIE, OffsetDateTime.now(), null, EventTypeEnum.ZOMBIE_CARD_SCANNED);
-
-                        OffsetDateTime now = OffsetDateTime.now();
-
-                        matchEventJpaRepository.save(
-                              MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_CARD_SCANNED)
-                                    .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                                    .payload(objectMapper.valueToTree(payload)).createdAt(now).match(match).build());
-
-                        if (zombieEvent != null) {
-                              if (zombieEvent.getSpawnPointType() != SpawnPointTypeEnum.EXTRA_ZOMBIE_TURN) {
-                                    switch (zombieEvent.getType()) {
-                                          case WALKERS -> match.setActiveWalkers(
-                                                match.getActiveWalkers() + zombieEvent.getAmount());
-                                          case RUNNERS -> match.setActiveRunners(
-                                                match.getActiveRunners() + zombieEvent.getAmount());
-                                          case FATIES -> {
-                                                match.setActiveFaties(
-                                                      match.getActiveFaties() + zombieEvent.getAmount());
-                                                match.setActiveWalkers(match.getActiveWalkers() + 2);
-                                          }
-                                          case ABOMINATION -> match.setActiveAbomination(
-                                                match.getActiveAbomination() + zombieEvent.getAmount());
-                                    }
-                              }
-                              matchJpaRepository.save(match);
-                              return payload;
+                                          .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now())
+                                          .match(match).build());
                         }
                   }
+
+                  matchJpaRepository.save(match);
             }
-            return null;
+            return payload;
+      }
+
+      private static void validateZombieType(MatchEntity match, TagEntity tag) {
+            if (tag.getZombieType().equals(ZombieTypeEnum.WALKERS)) {
+                  match.setActiveWalkers(match.getActiveWalkers() + 1);
+            } else if (tag.getZombieType().equals(ZombieTypeEnum.RUNNERS)) {
+                  match.setActiveRunners(match.getActiveRunners() + 1);
+            } else if (tag.getZombieType().equals(ZombieTypeEnum.FATIES)) {
+                  match.setActiveFaties(match.getActiveFaties() + 1);
+                  match.setActiveWalkers(match.getActiveWalkers() + 2);
+            } else if (tag.getZombieType().equals(ZombieTypeEnum.ABOMINATION)) {
+                  match.setActiveAbomination(match.getActiveAbomination() + 1);
+            } else {
+                  throw new IllegalArgumentException("Unsupported zombie type: " + tag.getZombieType());
+            }
       }
 
       private EventResponseDomain processPlayerEvent(MatchEntity match, TagEntity tag, DangerLevelEnum dangerLevel) {
@@ -180,58 +213,54 @@ public class NfcEventApplicationService {
             killZombies(match, tag, actor);
             matchJpaRepository.save(match);
             payload = new EventResponseDomain(dangerLevel, null, 1, 0, tag.getZombieType(), null, null,
-                  TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(),
-                  EventTypeEnum.ZOMBIE_KILL);
+                  TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(), EventTypeEnum.ZOMBIE_KILL);
 
             matchEventJpaRepository.save(
-                  MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_KILL)
-                        .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+                  MatchEventEntity.builder().eventType(EventTypeEnum.ZOMBIE_KILL).actor(getMatchPlayerEntity(match))
+                        .tagUid(tag.getTagUid()).payload(objectMapper.valueToTree(payload))
+                        .createdAt(OffsetDateTime.now()).match(match).build());
             return payload;
       }
 
-      private EventResponseDomain itemFound(MatchEntity match, TagEntity tag, DangerLevelEnum dangerLevel,
-                                    MatchPlayerEntity actor) {
+      private EventResponseDomain itemFound(MatchEntity match, TagEntity tag, DangerLevelEnum dangerLevel, MatchPlayerEntity actor) {
             EventResponseDomain payload;
             killZombies(match, tag, actor);
             matchJpaRepository.save(match);
-            payload = new EventResponseDomain(dangerLevel, null, 1, 0, tag.getZombieType(), null, tag.getItem().getName(),
-                  TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(),
+            payload = new EventResponseDomain(dangerLevel, null, 1, 0, tag.getZombieType(), null,
+                  tag.getName(), TurnPhase.PLAYER, OffsetDateTime.now(), actor.getCharacter().name(),
                   EventTypeEnum.ITEM_SCANNED);
 
             matchEventJpaRepository.save(
-                  MatchEventEntity.builder().eventType(EventTypeEnum.ITEM_SCANNED)
-                        .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+                  MatchEventEntity.builder().eventType(EventTypeEnum.ITEM_SCANNED).actor(getMatchPlayerEntity(match))
+                        .tagUid(tag.getTagUid()).payload(objectMapper.valueToTree(payload))
+                        .createdAt(OffsetDateTime.now()).match(match).build());
             return payload;
       }
 
       private EventResponseDomain revertDamage(MatchEntity match, TagEntity tag) {
             EventResponseDomain payload;
             MatchPlayerEntity target = getPlayersInStableOrder(match).stream()
-                  .filter(p -> p.getCharacter() == tag.getPlayerCharacter())
-                  .findFirst()
-                  .orElseThrow(() -> new IllegalArgumentException(
-                        "Player not found in active match for character=" + tag.getPlayerCharacter()));
+                  .filter(p -> p.getCharacter() == tag.getPlayerCharacter()).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(
+                              "Player not found in active match for character=" + tag.getPlayerCharacter()));
 
             target.setLife(target.getLife() + 1);
             matchPlayerJpaRepository.save(target);
 
-            payload = new EventResponseDomain(null, null, null, null, null, null, null,
-                  TurnPhase.PLAYER, OffsetDateTime.now(), tag.getPlayerCharacter().name(),
-                  EventTypeEnum.DAMAGE_REVERTED);
+            payload = new EventResponseDomain(null, null, null, null, null, null, null, TurnPhase.PLAYER,
+                  OffsetDateTime.now(), tag.getPlayerCharacter().name(), EventTypeEnum.DAMAGE_REVERTED);
 
             matchEventJpaRepository.save(
-                  MatchEventEntity.builder().eventType(EventTypeEnum.DAMAGE_REVERTED)
-                        .actor(getMatchPlayerEntity(match)).tagUid(tag.getTagUid())
-                        .payload(objectMapper.valueToTree(payload)).createdAt(OffsetDateTime.now()).match(match).build());
+                  MatchEventEntity.builder().eventType(EventTypeEnum.DAMAGE_REVERTED).actor(getMatchPlayerEntity(match))
+                        .tagUid(tag.getTagUid()).payload(objectMapper.valueToTree(payload))
+                        .createdAt(OffsetDateTime.now()).match(match).build());
             return payload;
       }
 
       private static void killZombies(MatchEntity match, TagEntity tag, MatchPlayerEntity actor) {
             actor.setZombiesKill(actor.getZombiesKill() + 1);
             actor.setLevel(actor.getLevel() + 1);
-            if (tag.getZombieType()== ZombieTypeEnum.WALKERS) {
+            if (tag.getZombieType() == ZombieTypeEnum.WALKERS) {
                   match.setActiveWalkers(match.getActiveWalkers() - 1);
             } else if (tag.getZombieType() == ZombieTypeEnum.RUNNERS) {
                   match.setActiveRunners(match.getActiveRunners() - 1);
@@ -261,11 +290,9 @@ public class NfcEventApplicationService {
 
             // Garante ordem determinística para que o currentTurnIndex aponte sempre para o mesmo jogador,
             // independentemente de como o JPA retornar a coleção após saves/flush.
-            return match.getPlayers().stream()
-                  .sorted(Comparator
-                        .comparing((MatchPlayerEntity p) -> p.getCharacter() == null ? "" : p.getCharacter().name())
-                        .thenComparing(p -> p.getId() == null ? "" : p.getId().toString()))
-                  .toList();
+            return match.getPlayers().stream().sorted(
+                  Comparator.comparing((MatchPlayerEntity p) -> p.getCharacter() == null ? "" : p.getCharacter().name())
+                        .thenComparing(p -> p.getId() == null ? "" : p.getId().toString())).toList();
       }
 
       public EventResponseDomain getLastEvent() {

@@ -8,7 +8,7 @@ Adafruit_PN532 nfc(21, 22);
 
 void setup() {
   Serial.begin(115200);
-  pinMode(BUTTON_NEXT_TURN, INPUT);
+  pinMode(BUTTON_NEXT_TURN, INPUT_PULLUP);
   Wire.begin(21,22);
   nfc.begin();
 
@@ -28,7 +28,7 @@ void loop() {
   uint8_t uid[7];
   uint8_t uidLength;
 
-  if(state == 1){
+  if(state == 0){
     Serial.println("BUTTON_NEXT_TURN");
     delay(500);
   }

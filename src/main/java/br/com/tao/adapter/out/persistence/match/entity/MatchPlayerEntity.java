@@ -36,4 +36,7 @@ public class MatchPlayerEntity {
 
       @Column (name = "zombies_kill", nullable = false)
       private Integer zombiesKill = 0;
+
+      @Column (name = "objectives", nullable = false)
+      private Integer objectives = 0;
 }

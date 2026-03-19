@@ -3,6 +3,7 @@ package br.com.tao.application.service.enumeration;
 import java.util.Arrays;
 
 public enum TagTypeEnum {
+      ITEM,
       ITEMS_CARD,
       MISSION_OBJECTIVE,
       PLAYER,
